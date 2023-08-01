@@ -19,7 +19,7 @@ namespace KafkaPublisherSubscriber.Tests
             });
 
             // Act
-            var result = DependencyInjectionConfig.AddBmgKafkaProducer(services, producerConfigAction);
+            var result = DependencyInjectionConfig.AddKafkaProducer(services, producerConfigAction);
 
             // Assert
             Assert.NotNull(result);
@@ -41,7 +41,7 @@ namespace KafkaPublisherSubscriber.Tests
             });
 
             // Act
-            var result = DependencyInjectionConfig.AddBmgKafkaConsumer(services, consumerConfigAction);
+            var result = DependencyInjectionConfig.AddKafkaConsumer(services, consumerConfigAction);
 
             // Assert
             Assert.NotNull(result);
@@ -68,7 +68,7 @@ namespace KafkaPublisherSubscriber.Tests
             });
 
             // Act
-            var result = DependencyInjectionConfig.AddBmgKafkaProducerAndConsumer(services, consumerConfigAction, producerConfigAction);
+            var result = DependencyInjectionConfig.AddKafkaProducerAndConsumer(services, consumerConfigAction, producerConfigAction);
 
             // Assert
             Assert.NotNull(result);
