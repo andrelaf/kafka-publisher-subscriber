@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<Version>1.0.0</Version>
+		<Authors>André Lara Amorim de Freitas</Authors>
+		<Company></Company>
+		<Description>Uma biblioteca para integração com Kafka utilizando o padrão publisher/subscriber.</Description>
+		<PackageTags>nuget, kafka, pubsub</PackageTags>
+		<PackageProjectUrl>https://github.com/seu-usuario/KafkaPublisherSubscriber</PackageProjectUrl>
+		<PackageLicenseUrl>https://github.com/seu-usuario/KafkaPublisherSubscriber/blob/main/LICENSE</PackageLicenseUrl>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/seu-usuario/KafkaPublisherSubscriber.git</RepositoryUrl>
+		<PackageIcon></PackageIcon>
+		<PackageReleaseNotes>
+			- Versão 1.0.0: Primeiro lançamento do pacote KafkaPublisherSubscriber.
+		</PackageReleaseNotes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Confluent.Kafka" Version="2.2.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+	</ItemGroup>
+
+</Project>
