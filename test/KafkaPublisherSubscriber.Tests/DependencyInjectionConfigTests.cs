@@ -8,7 +8,7 @@ namespace KafkaPublisherSubscriber.Tests
     public class DependencyInjectionConfigTests
     {
         [Fact]
-        public void AddBmgKafkaProducer_ValidConfig_ReturnsCorrectServiceCollection()
+        public void AddKafkaProducer_ValidConfig_ReturnsCorrectServiceCollection()
         {
             // Arrange
             var services = new ServiceCollection();
@@ -29,7 +29,7 @@ namespace KafkaPublisherSubscriber.Tests
         }
 
         [Fact]
-        public void AddBmgKafkaConsumer_ValidConfig_ReturnsCorrectServiceCollection()
+        public void AddKafkaConsumer_ValidConfig_ReturnsCorrectServiceCollection()
         {
             // Arrange
             var services = new ServiceCollection();
@@ -51,7 +51,7 @@ namespace KafkaPublisherSubscriber.Tests
         }
 
         [Fact]
-        public void AddBmgKafkaProducerAndConsumer_ValidConfig_ReturnsCorrectServiceCollection()
+        public void AddKafkaProducerAndConsumer_ValidConfig_ReturnsCorrectServiceCollection()
         {
             // Arrange
             var services = new ServiceCollection();
