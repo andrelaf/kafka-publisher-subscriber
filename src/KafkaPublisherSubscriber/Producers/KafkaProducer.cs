@@ -42,6 +42,8 @@ namespace KafkaPublisherSubscriber.Producers
                     var result = await producer.ProduceAsync(topic, new Message<TKey, TValue> { Value = message });
                     Console.WriteLine($"Mensagem '{message}' enviada para partição: {result.Partition}, Offset: {result.Offset}");
                 }
+
+                producer.Flush(TimeSpan.FromSeconds(10));
             }
         }
 
