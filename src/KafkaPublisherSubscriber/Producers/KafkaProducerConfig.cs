@@ -2,7 +2,7 @@
 
 namespace KafkaPublisherSubscriber.Producers
 {
-    public class KafkaProducerSettings
+    public class KafkaProducerConfig
     {
         public string BootstrapServers { get; private set; }
         public string Topic { get; private set; }

@@ -8,23 +8,39 @@ namespace KafkaPublisherSubscriber
 {
     public static class DependencyInjectionConfig
     {
-        public static IServiceCollection AddKafkaProducer(this IServiceCollection services, Action<KafkaProducerSettingsBuilder> producerConfigAction)
+        public static IServiceCollection AddKafkaProducer<TKey, TValue>(this IServiceCollection services, Action<KafkaProducerConfigBuilder> producerConfigAction)
         {
-            services.AddSingleton<IKafkaProducer>(KafkaProducer.CreateInstance(producerConfigAction));
+            services.AddSingleton<IKafkaProducer<TKey, TValue>>(provider =>
+            {;
+                return KafkaProducer<TKey, TValue>.CreateInstance(producerConfigAction);
+            });
+
             return services;
         }
 
-        public static IServiceCollection AddKafkaConsumer(this IServiceCollection services, Action<KafkaConsumerSettingsBuilder> consumerConfigAction)
+        public static IServiceCollection AddKafkaConsumer<TKey, TValue>(this IServiceCollection services, Action<KafkaConsumerConfigBuilder> consumerConfigAction)
         {
-            services.AddSingleton<IKafkaConsumer>(KafkaConsumer.CreateInstance(consumerConfigAction));
+            services.AddSingleton<IKafkaConsumer<TKey, TValue>>(provider =>
+            {
+                return KafkaConsumer<TKey, TValue>.CreateInstance(consumerConfigAction);
+            });
+
             return services;
         }
 
-        public static IServiceCollection AddKafkaProducerAndConsumer(this IServiceCollection services, Action<KafkaConsumerSettingsBuilder> consumerConfigAction, Action<KafkaProducerSettingsBuilder> producerConfigAction)
+        public static IServiceCollection AddKafkaProducerAndConsumer<TKey, TValue>(this IServiceCollection services, Action<KafkaConsumerConfigBuilder> consumerConfigAction, Action<KafkaProducerConfigBuilder> producerConfigAction)
         {
-            services.AddSingleton<IKafkaConsumer>(KafkaConsumer.CreateInstance(consumerConfigAction));
-            services.AddSingleton<IKafkaProducer>(KafkaProducer.CreateInstance(producerConfigAction));
-            services.AddSingleton<IKafkaMessageHandler, KafkaMessageHandler>();
+            services.AddSingleton<IKafkaConsumer<TKey, TValue>>(provider =>
+            {
+                return KafkaConsumer<TKey, TValue>.CreateInstance(consumerConfigAction);
+            });
+
+            services.AddSingleton<IKafkaProducer<TKey, TValue>>(provider =>
+            {
+                return KafkaProducer<TKey, TValue>.CreateInstance(producerConfigAction);
+            });
+
+            services.AddSingleton<IKafkaMessageHandler<TKey, TValue>, KafkaMessageHandler<TKey, TValue>>();
             return services;
         }
 

@@ -13,7 +13,7 @@ namespace ProducerWorker
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var producer = _serviceProvider.GetRequiredService<IKafkaProducer>();
+            var producer = _serviceProvider.GetRequiredService<IKafkaProducer<string, string>>();
 
             int messagesToSend = 1000;
             for (int i = 1; i <= messagesToSend; i++)
@@ -23,8 +23,9 @@ namespace ProducerWorker
                     break;
                 }
 
-                var message = $"Test Message {i}";
-                var deliveryReport = await producer.SendMessageAsync(producer.Settings.Topic, message);
+                string key = i.ToString();
+                string message = $"Test Message {i}";
+                var deliveryReport = await producer.SendAsync(producer.Settings.Topic, message, key);
 
                 Console.WriteLine($"Message '{message}' sent to topic '{deliveryReport.Topic}' at partition {deliveryReport.Partition} and offset {deliveryReport.Offset}");
 
@@ -33,3 +34,5 @@ namespace ProducerWorker
         }
     }
 }
+
+

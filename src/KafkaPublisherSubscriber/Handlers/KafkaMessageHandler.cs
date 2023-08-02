@@ -11,47 +11,49 @@ using KafkaPublisherSubscriber.Extensions;
 namespace KafkaPublisherSubscriber.Handlers
 {
 
-    public interface IKafkaMessageHandler
+    public class KafkaMessageHandler<TKey, TValue> : IKafkaMessageHandler<TKey, TValue>
     {
-        Task Subscribe(Func<string, Task> onMessageReceived, CancellationToken cancellationToken);
+        private readonly IKafkaConsumer<TKey, TValue> _kafkaConsumer;
+        private readonly IKafkaProducer<TKey, TValue> _kafkaProducer;
 
-    }
-
-    public class KafkaMessageHandler : IKafkaMessageHandler
-    {
-        private readonly IKafkaConsumer _kafkaConsumer;
-        private readonly IKafkaProducer _kafkaProducer;
-
-        public KafkaMessageHandler(IKafkaConsumer kafkaConsumer, IKafkaProducer kafkaProducer)
+        public KafkaMessageHandler(IKafkaConsumer<TKey, TValue> kafkaConsumer, IKafkaProducer<TKey, TValue> kafkaProducer)
         {
             _kafkaConsumer = kafkaConsumer ?? throw new ArgumentNullException(nameof(kafkaConsumer));
             _kafkaProducer = kafkaProducer ?? throw new ArgumentNullException(nameof(kafkaProducer));
         }
 
-        public async Task Subscribe(Func<string, Task> onMessageReceived, CancellationToken cancellationToken)
+        public async Task Subscribe(Func<TValue, Task> onMessageReceived, CancellationToken cancellationToken)
         {
-            var topics = new List<string>()
+            var topics = new List<string>
             {
                 _kafkaConsumer.Settings.Topic
             };
 
-
-            if(!string.IsNullOrEmpty(_kafkaConsumer.Settings.TopicRetry))
+            if (!string.IsNullOrEmpty(_kafkaConsumer.Settings.TopicRetry))
             {
                 topics.Add(_kafkaConsumer.Settings.TopicRetry);
             }
 
-           _kafkaConsumer.Subscribe(topics.ToArray());
+            _kafkaConsumer.Subscribe(topics.ToArray());
 
             try
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                   
                     var consumeResult = await _kafkaConsumer.Consume(cancellationToken);
 
                     try
                     {
+                        if (consumeResult.IsPartitionEOF)
+                        {
+                            Console.WriteLine("Consumer has reached end of topic {Topic}, partition {Partition}, offset {OffSet}",
+                                              consumeResult.Topic,
+                                              consumeResult.Partition,
+                                              consumeResult.Offset);
+                            continue;
+                        }
+
+
                         await onMessageReceived?.Invoke(consumeResult.Message.Value);
                         if (!_kafkaConsumer.Settings.EnableAutoCommit)
                         {
@@ -62,7 +64,8 @@ namespace KafkaPublisherSubscriber.Handlers
                     }
                     catch (OperationCanceledException)
                     {
-                        throw;
+                        Console.WriteLine("Consumer Cancelled!");
+                        break; // Break the loop when the token is canceled
                     }
                     catch (Exception ex)
                     {
@@ -79,11 +82,10 @@ namespace KafkaPublisherSubscriber.Handlers
             {
                 _kafkaConsumer?.Dispose();
             }
-
         }
 
-        protected internal virtual async Task HandleError(IKafkaConsumer consumer,
-                                                          ConsumeResult<Ignore, string> consumeResult,
+        protected internal virtual async Task HandleError(IKafkaConsumer<TKey, TValue> consumer,
+                                                          ConsumeResult<TKey, TValue> consumeResult,
                                                           Exception ex,
                                                           int retryCount,
                                                           CancellationToken cancellationToken)
@@ -98,7 +100,7 @@ namespace KafkaPublisherSubscriber.Handlers
                 {
                     // Retry the message by using the consumer and producer interfaces
                     await consumer.Commit(consumeResult); // Commit the offset before retrying
-                    await PublishToRetryTopicAsync(consumeResult.Message.Value, retryCount + 1);
+                    await PublishToRetryTopicAsync(consumeResult.Message.Value, consumeResult.Message.Key, retryCount + 1);
                     break; // Exit the retry loop if the retry is successful
                 }
                 catch (Exception retryEx)
@@ -122,19 +124,19 @@ namespace KafkaPublisherSubscriber.Handlers
             }
         }
 
-        private async Task PublishToRetryTopicAsync(string message, int retryCount = 0)
+        private async Task PublishToRetryTopicAsync(TValue message, TKey key, int retryCount = 0)
         {
             var headers = new Headers
             {
                 { "RetryCount", Encoding.UTF8.GetBytes(retryCount.ToString()) }
             };
 
-            await _kafkaProducer.SendMessageAsync(_kafkaConsumer.Settings.TopicRetry, message, headers);
+            await _kafkaProducer.SendAsync(_kafkaConsumer.Settings.TopicRetry, message, key, headers);
         }
 
-        private async Task PublishToDeadLetterTopicAsync(string message)
+        private async Task PublishToDeadLetterTopicAsync(TValue message)
         {
-            await _kafkaProducer.SendMessageAsync(_kafkaConsumer.Settings.TopicDeadLetter, message);
+            await _kafkaProducer.SendAsync(_kafkaConsumer.Settings.TopicDeadLetter, message);
         }
     }
 }

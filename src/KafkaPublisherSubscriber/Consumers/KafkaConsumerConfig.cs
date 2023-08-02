@@ -2,14 +2,14 @@
 
 namespace KafkaPublisherSubscriber.Consumers
 {
-    public class KafkaConsumerSettings
+    public class KafkaConsumerConfig
     {
         public string GroupId { get; private set; }
         public string BootstrapServers { get; private set; }
         public bool EnableAutoCommit { get; private set; } = false;
         public int? StatisticsIntervalMs { get; private set; } = 5000;
         public int? SessionTimeoutMs { get; private set; } = 6000;
-        public bool? EnablePartitionEof { get; private set; }
+        public bool? EnablePartitionEof { get; private set; } = true;
         public bool? ApiVersionRequest { get; private set; }
         public string Topic { get; private set; }
         public string TopicRetry { get; private set; }

@@ -7,11 +7,11 @@ namespace KafkaPublisherSubscriber.Factories
 {
     public static class KafkaConnectionFactory
     {
-        public static IConsumer<Ignore, string> CreateConsumer(KafkaConsumerSettings settings)
+        public static IConsumer<TKey, TValue> CreateConsumer<TKey, TValue>(KafkaConsumerConfig settings)
         {
             if (settings is null)
             {
-                throw new ArgumentNullException(nameof(KafkaConsumerSettings));
+                throw new ArgumentNullException(nameof(KafkaConsumerConfig));
             }
 
             var consumerConfig = new ConsumerConfig()
@@ -26,14 +26,14 @@ namespace KafkaPublisherSubscriber.Factories
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
 
-            return new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
+            return new ConsumerBuilder<TKey, TValue>(consumerConfig).Build();
         }
 
-        public static IProducer<Null, string> CreateProducer(KafkaProducerSettings settings)
+        public static IProducer<TKey, TValue> CreateProducer<TKey, TValue>(KafkaProducerConfig settings)
         {
             if (settings is null)
             {
-                throw new ArgumentNullException(nameof(KafkaProducerSettings));
+                throw new ArgumentNullException(nameof(KafkaProducerConfig));
             }
 
             var producerConfig = new ProducerConfig()
@@ -46,7 +46,8 @@ namespace KafkaPublisherSubscriber.Factories
                 ApiVersionRequest = settings.ApiVersionRequest,
             };
 
-            return new ProducerBuilder<Null, string>(producerConfig).Build();
+            return new ProducerBuilder<TKey, TValue>(producerConfig).Build();
         }
     }
+
 }

@@ -2,17 +2,15 @@ using KafkaPublisherSubscriber.Handlers;
 
 namespace ConsumerWorker
 {
-
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
+        private readonly IKafkaMessageHandler<string, string> _kafkaMessageHandler;
 
-        private readonly IKafkaMessageHandler _kafkaMessageHandler;
-
-        public Worker(ILogger<Worker> logger, IServiceProvider serviceProvider)
+        public Worker(ILogger<Worker> logger, IKafkaMessageHandler<string, string> kafkaMessageHandler)
         {
             _logger = logger;
-            _kafkaMessageHandler = serviceProvider.GetRequiredService<IKafkaMessageHandler>();
+            _kafkaMessageHandler = kafkaMessageHandler;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

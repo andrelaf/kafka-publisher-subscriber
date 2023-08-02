@@ -2,12 +2,20 @@ using ProducerWorker;
 using KafkaPublisherSubscriber;
 
 IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
+    .UseEnvironment("Staging")
+    .ConfigureServices((hostContext, services) =>
     {
-        services.AddKafkaProducer(producerConfigAction =>
+
+        IConfiguration configuration = hostContext.Configuration;
+
+        var kafkaSettings = configuration.GetSection(nameof(KafkaSettings)).Get<KafkaSettings>();
+
+        ArgumentNullException.ThrowIfNull(kafkaSettings);
+
+        services.AddKafkaProducer<string, string>(producerConfigAction =>
         {
-            producerConfigAction.WithBootstrapServers("localhost:9092");
-            producerConfigAction.WithTopic("my-topic");
+            producerConfigAction.WithBootstrapServers(kafkaSettings.BootstrapServers);
+            producerConfigAction.WithTopic(kafkaSettings.Topic);
         });
 
         services.AddHostedService<Worker>();

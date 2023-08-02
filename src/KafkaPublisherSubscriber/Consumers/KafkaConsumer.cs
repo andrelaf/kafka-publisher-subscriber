@@ -6,40 +6,30 @@ using KafkaPublisherSubscriber.Factories;
 
 namespace KafkaPublisherSubscriber.Consumers
 {
-    public interface IKafkaConsumer : IDisposable
+
+    public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue>
     {
-        KafkaConsumerSettings Settings { get; }
-        Task<ConsumeResult<Ignore, string>> Consume(CancellationToken cancellationToken);
-        Task Commit(ConsumeResult<Ignore, string> consumeResult);
-        void Subscribe(string[] topics);
-    }
+        public readonly IConsumer<TKey, TValue> _consumer;
 
+        private readonly KafkaConsumerConfig _consumerSettings;
 
-    public class KafkaConsumer : IKafkaConsumer
-    {
-
-        public readonly IConsumer<Ignore, string> _consumer;
-
-        private readonly KafkaConsumerSettings _consumerSettings;
-
-        public KafkaConsumer(KafkaConsumerSettings consumerSettings)
+        public KafkaConsumer(KafkaConsumerConfig consumerSettings)
         {
             _consumerSettings = consumerSettings;
-            _consumer = KafkaConnectionFactory.CreateConsumer(consumerSettings);
+            _consumer = KafkaConnectionFactory.CreateConsumer<TKey, TValue>(consumerSettings);
         }
 
-        public KafkaConsumerSettings Settings { get { return _consumerSettings; } }
+        public KafkaConsumerConfig Settings => _consumerSettings;
 
-        public async Task<ConsumeResult<Ignore, string>> Consume(CancellationToken cancellationToken)
+        public async Task<ConsumeResult<TKey, TValue>> Consume(CancellationToken cancellationToken)
         {
             return await Task.Run(() => _consumer.Consume(cancellationToken), cancellationToken);
         }
 
-        public async Task Commit(ConsumeResult<Ignore, string> consumeResult)
+        public async Task Commit(ConsumeResult<TKey, TValue> consumeResult)
         {
             await Task.Run(() => _consumer.Commit(consumeResult));
         }
-
 
         public void Subscribe(string[] topics)
         {
@@ -52,15 +42,12 @@ namespace KafkaPublisherSubscriber.Consumers
             _consumer?.Dispose();
         }
 
-
-        public static KafkaConsumer CreateInstance(Action<KafkaConsumerSettingsBuilder> consumerConfigAction)
+        public static KafkaConsumer<TKey, TValue> CreateInstance(Action<KafkaConsumerConfigBuilder> consumerConfigAction)
         {
-            var consumerSettingsBuilder = new KafkaConsumerSettingsBuilder();
+            var consumerSettingsBuilder = new KafkaConsumerConfigBuilder();
             consumerConfigAction?.Invoke(consumerSettingsBuilder);
             var consumerSettings = consumerSettingsBuilder.Build();
-
-            return new KafkaConsumer(consumerSettings);
+            return new KafkaConsumer<TKey, TValue>(consumerSettings);
         }
     }
-
 }

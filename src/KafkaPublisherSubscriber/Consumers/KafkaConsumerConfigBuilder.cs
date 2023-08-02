@@ -3,83 +3,83 @@ using System;
 
 namespace KafkaPublisherSubscriber.Consumers
 {
-    public class KafkaConsumerSettingsBuilder
+    public class KafkaConsumerConfigBuilder
     {
-        private readonly KafkaConsumerSettings settings = new KafkaConsumerSettings();
+        private readonly KafkaConsumerConfig settings = new KafkaConsumerConfig();
 
-        public KafkaConsumerSettingsBuilder WithGroupId(string groupId)
+        public KafkaConsumerConfigBuilder WithGroupId(string groupId)
         {
             settings.SetGroupId(groupId);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithBootstrapServers(string bootstrapServers)
+        public KafkaConsumerConfigBuilder WithBootstrapServers(string bootstrapServers)
         {
             settings.SetBootstrapServers(bootstrapServers);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithEnableAutoCommit(bool enableAutoCommit)
+        public KafkaConsumerConfigBuilder WithEnableAutoCommit(bool enableAutoCommit)
         {
             settings.SetEnableAutoCommit(enableAutoCommit);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithStatisticsIntervalMs(int statisticsIntervalMs)
+        public KafkaConsumerConfigBuilder WithStatisticsIntervalMs(int statisticsIntervalMs)
         {
             settings.SetStatisticsIntervalMs(statisticsIntervalMs);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithSessionTimeoutMs(int sessionTimeoutMs)
+        public KafkaConsumerConfigBuilder WithSessionTimeoutMs(int sessionTimeoutMs)
         {
             settings.SetSessionTimeoutMs(sessionTimeoutMs);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithEnablePartitionEof(bool enablePartitionEof)
+        public KafkaConsumerConfigBuilder WithEnablePartitionEof(bool enablePartitionEof)
         {
             settings.SetEnablePartitionEof(enablePartitionEof);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithApiVersionRequest(bool apiVersionRequest)
+        public KafkaConsumerConfigBuilder WithApiVersionRequest(bool apiVersionRequest)
         {
             settings.SetApiVersionRequest(apiVersionRequest);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithTopic(string topic)
+        public KafkaConsumerConfigBuilder WithTopic(string topic)
         {
             settings.SetTopic(topic);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithRetryTopic(string retryTopic)
+        public KafkaConsumerConfigBuilder WithTopicRetry(string retryTopic)
         {
             settings.SetTopicRetry(retryTopic);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithDeadLetterTopic(string deadLetterTopic)
+        public KafkaConsumerConfigBuilder WithTopicDeadLetter(string deadLetterTopic)
         {
             settings.SetTopicDeadLetter(deadLetterTopic);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithMaxRetryAttempts(int maxRetryAttempts)
+        public KafkaConsumerConfigBuilder WithMaxRetryAttempts(int maxRetryAttempts)
         {
             settings.SetMaxRetryAttempts(maxRetryAttempts);
             return this;
         }
 
-        public KafkaConsumerSettingsBuilder WithAutoOffsetReset(AutoOffsetReset autoOffsetReset)
+        public KafkaConsumerConfigBuilder WithAutoOffsetReset(AutoOffsetReset autoOffsetReset)
         {
             settings.SetAutoOffsetReset(autoOffsetReset);
             return this;
         }
 
-        public KafkaConsumerSettings Build()
+        public KafkaConsumerConfig Build()
         {
             if (settings.BootstrapServers is null || settings.GroupId is null || settings.Topic is null)
             {

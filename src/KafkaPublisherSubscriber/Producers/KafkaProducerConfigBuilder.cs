@@ -3,53 +3,53 @@ using System;
 
 namespace KafkaPublisherSubscriber.Producers
 {
-    public class KafkaProducerSettingsBuilder
+    public class KafkaProducerConfigBuilder
     {
-        private readonly KafkaProducerSettings settings = new KafkaProducerSettings();
+        private readonly KafkaProducerConfig settings = new KafkaProducerConfig();
 
-        public KafkaProducerSettingsBuilder WithBootstrapServers(string bootstrapServers)
+        public KafkaProducerConfigBuilder WithBootstrapServers(string bootstrapServers)
         {
             settings.SetBootstrapServers(bootstrapServers);
             return this;
         }
 
-        public KafkaProducerSettingsBuilder WithTopic(string topic)
+        public KafkaProducerConfigBuilder WithTopic(string topic)
         {
             settings.SetTopic(topic);
             return this;
         }
 
-        public KafkaProducerSettingsBuilder WithEnableIdempotence(bool enableIdempotence)
+        public KafkaProducerConfigBuilder WithEnableIdempotence(bool enableIdempotence)
         {
             settings.SetEnableIdempotence(enableIdempotence);
             return this;
         }
 
-        public KafkaProducerSettingsBuilder WithApiVersionRequest(bool apiVersionRequest)
+        public KafkaProducerConfigBuilder WithApiVersionRequest(bool apiVersionRequest)
         {
             settings.SetApiVersionRequest(apiVersionRequest);
             return this;
         }
 
-        public KafkaProducerSettingsBuilder WithMessageSendMaxRetries(int messageSendMaxRetries)
+        public KafkaProducerConfigBuilder WithMessageSendMaxRetries(int messageSendMaxRetries)
         {
             settings.SetMessageSendMaxRetries(messageSendMaxRetries);
             return this;
         }
 
-        public KafkaProducerSettingsBuilder WithAcks(Acks acks)
+        public KafkaProducerConfigBuilder WithAcks(Acks acks)
         {
             settings.SetAcks(acks);
             return this;
         }
 
-        public KafkaProducerSettingsBuilder WithMaxInFlight(int maxInFlight)
+        public KafkaProducerConfigBuilder WithMaxInFlight(int maxInFlight)
         {
             settings.SetMaxInFlight(maxInFlight);
             return this;
         }
 
-        public KafkaProducerSettings Build()
+        public KafkaProducerConfig Build()
         {
             if (settings.BootstrapServers is null || settings.Topic is null)
             {

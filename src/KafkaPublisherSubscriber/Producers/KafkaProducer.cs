@@ -6,62 +6,52 @@ using System.Threading.Tasks;
 
 namespace KafkaPublisherSubscriber.Producers
 {
-    public interface IKafkaProducer
+
+    public class KafkaProducer<TKey, TValue> : IKafkaProducer<TKey, TValue>
     {
-        KafkaProducerSettings Settings { get; }
-        Task<DeliveryResult<Null, string>> SendMessageAsync(string topic, string message);
-        Task<DeliveryResult<Null, string>> SendMessageAsync(string topic, string message, Headers headers);
-        Task SendManyMessagesAsync(string topic, IEnumerable<string> messages);
-    }
-    public class KafkaProducer : IKafkaProducer
-    {
-        private readonly KafkaProducerSettings _producerSettings;
-        public KafkaProducer(KafkaProducerSettings producerSettings)
+        private readonly KafkaProducerConfig _producerSettings;
+
+        public KafkaProducer(KafkaProducerConfig producerSettings)
         {
             _producerSettings = producerSettings ?? throw new ArgumentNullException(nameof(producerSettings));
         }
-        public KafkaProducerSettings Settings { get { return _producerSettings;  } }
 
-        public async Task<DeliveryResult<Null, string>> SendMessageAsync(string topic, string message)
+        public KafkaProducerConfig Settings => _producerSettings;
+
+        public async Task<DeliveryResult<TKey, TValue>> SendAsync(string topic, TValue message, TKey key = default, Headers headers = null)
         {
-            using (var producer = KafkaConnectionFactory.CreateProducer(_producerSettings))
+            var kafkaMessage = new Message<TKey, TValue>
             {
-                return await producer.ProduceAsync(topic, new Message<Null, string> { Value = message });
-            }
-        }
-        public async Task<DeliveryResult<Null, string>> SendMessageAsync(string topic, string message, Headers headers)
-        {
-            var kafkaMessage = new Message<Null, string>
-            {
+                Key = key,
                 Value = message,
                 Headers = headers
             };
 
-            using (var producer = KafkaConnectionFactory.CreateProducer(_producerSettings))
+            using (var producer = KafkaConnectionFactory.CreateProducer<TKey, TValue>(_producerSettings))
             {
                 return await producer.ProduceAsync(topic, kafkaMessage);
             }
-
         }
-        public async Task SendManyMessagesAsync(string topic, IEnumerable<string> messages)
+
+        public async Task SendBatchAsync(string topic, IEnumerable<TValue> messages)
         {
-            using (var producer = KafkaConnectionFactory.CreateProducer(_producerSettings))
+            using (var producer = KafkaConnectionFactory.CreateProducer<TKey, TValue>(_producerSettings))
             {
                 foreach (var message in messages)
                 {
-                    var result = await producer.ProduceAsync(topic, new Message<Null, string> { Value = message });
+                    var result = await producer.ProduceAsync(topic, new Message<TKey, TValue> { Value = message });
                     Console.WriteLine($"Mensagem '{message}' enviada para partição: {result.Partition}, Offset: {result.Offset}");
                 }
             }
         }
 
-
-        public static KafkaProducer CreateInstance(Action<KafkaProducerSettingsBuilder> producerConfigAction)
+        public static KafkaProducer<TKey, TValue> CreateInstance(Action<KafkaProducerConfigBuilder> producerConfigAction)
         {
-            var producerSettingsBuilder = new KafkaProducerSettingsBuilder();
+            var producerSettingsBuilder = new KafkaProducerConfigBuilder();
             producerConfigAction?.Invoke(producerSettingsBuilder);
             var producerSettings = producerSettingsBuilder.Build();
-            return new KafkaProducer(producerSettings);
+            return new KafkaProducer<TKey, TValue>(producerSettings);
         }
     }
+
 }

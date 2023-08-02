@@ -9,13 +9,13 @@ namespace KafkaProducerExample
             var cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = cancellationTokenSource.Token;
 
-            var producerConfigAction = new Action<KafkaProducerSettingsBuilder>(builder =>
+            var producerConfigAction = new Action<KafkaProducerConfigBuilder>(builder =>
             {
                 builder.WithBootstrapServers("localhost:9092");
                 builder.WithTopic("my-topic");
             });
 
-            var producer = KafkaProducer.CreateInstance(producerConfigAction);
+            var producer = KafkaProducer<string, string>.CreateInstance(producerConfigAction); // Alteração nesta linha
 
             Console.CancelKeyPress += (_, e) =>
             {
@@ -31,7 +31,7 @@ namespace KafkaProducerExample
                 {
                     var message = $"Test Message {messageCounter}";
 
-                    var deliveryReport = await producer.SendMessageAsync(producer.Settings.Topic, message);
+                    var deliveryReport = await producer.SendAsync(producer.Settings.Topic, message); // Alteração nesta linha
 
                     Console.WriteLine($"Message '{message}' sent to topic '{deliveryReport.Topic}' at partition {deliveryReport.Partition} and offset {deliveryReport.Offset}");
 
@@ -46,6 +46,4 @@ namespace KafkaProducerExample
             }
         }
     }
-
-  
 }

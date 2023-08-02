@@ -1,4 +1,5 @@
-﻿using KafkaPublisherSubscriber.Consumers;
+﻿using Confluent.Kafka;
+using KafkaPublisherSubscriber.Consumers;
 using KafkaPublisherSubscriber.Handlers;
 using KafkaPublisherSubscriber.Producers;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,19 +13,19 @@ namespace KafkaPublisherSubscriber.Tests
         {
             // Arrange
             var services = new ServiceCollection();
-            var producerConfigAction = new Action<KafkaProducerSettingsBuilder>(builder =>
+            var producerConfigAction = new Action<KafkaProducerConfigBuilder>(builder =>
             {
                 builder.WithBootstrapServers("localhost:9092");
                 builder.WithTopic("test-topic");
             });
 
             // Act
-            var result = DependencyInjectionConfig.AddKafkaProducer(services, producerConfigAction);
+            var result = DependencyInjectionConfig.AddKafkaProducer<string, string>(services, producerConfigAction);
 
             // Assert
             Assert.NotNull(result);
             Assert.IsAssignableFrom<IServiceCollection>(result);
-            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaProducer));
+            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaProducer<string, string>));
             Assert.Single(result);
         }
 
@@ -33,7 +34,7 @@ namespace KafkaPublisherSubscriber.Tests
         {
             // Arrange
             var services = new ServiceCollection();
-            var consumerConfigAction = new Action<KafkaConsumerSettingsBuilder>(builder =>
+            var consumerConfigAction = new Action<KafkaConsumerConfigBuilder>(builder =>
             {
                 builder.WithBootstrapServers("localhost:9092");
                 builder.WithTopic("test-topic");
@@ -41,12 +42,12 @@ namespace KafkaPublisherSubscriber.Tests
             });
 
             // Act
-            var result = DependencyInjectionConfig.AddKafkaConsumer(services, consumerConfigAction);
+            var result = DependencyInjectionConfig.AddKafkaConsumer<string, string>(services, consumerConfigAction);
 
             // Assert
             Assert.NotNull(result);
             Assert.IsAssignableFrom<IServiceCollection>(result);
-            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaConsumer));
+            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaConsumer<string, string>));
             Assert.Single(result);
         }
 
@@ -55,12 +56,12 @@ namespace KafkaPublisherSubscriber.Tests
         {
             // Arrange
             var services = new ServiceCollection();
-            var producerConfigAction = new Action<KafkaProducerSettingsBuilder>(builder =>
+            var producerConfigAction = new Action<KafkaProducerConfigBuilder>(builder =>
             {
                 builder.WithBootstrapServers("localhost:9092");
                 builder.WithTopic("test-topic");
             });
-            var consumerConfigAction = new Action<KafkaConsumerSettingsBuilder>(builder =>
+            var consumerConfigAction = new Action<KafkaConsumerConfigBuilder>(builder =>
             {
                 builder.WithBootstrapServers("localhost:9092");
                 builder.WithTopic("test-topic");
@@ -68,14 +69,14 @@ namespace KafkaPublisherSubscriber.Tests
             });
 
             // Act
-            var result = DependencyInjectionConfig.AddKafkaProducerAndConsumer(services, consumerConfigAction, producerConfigAction);
+            var result = DependencyInjectionConfig.AddKafkaProducerAndConsumer<string, string>(services, consumerConfigAction, producerConfigAction);
 
             // Assert
             Assert.NotNull(result);
             Assert.IsAssignableFrom<IServiceCollection>(result);
-            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaConsumer));
-            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaProducer));
-            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaMessageHandler));
+            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaConsumer<string, string>));
+            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaProducer<string, string>));
+            Assert.Contains(result, service => service.ServiceType == typeof(IKafkaMessageHandler<string, string>));
             Assert.Equal(3, result.Count);
         }
     }

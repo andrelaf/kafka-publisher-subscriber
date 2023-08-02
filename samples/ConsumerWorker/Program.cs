@@ -5,17 +5,18 @@ internal class Program
 {
     private static void Main(string[] args)
     {
+
         IHost host = Host.CreateDefaultBuilder(args)
-        .ConfigureServices(services =>
-        {
-            services.AddKafkaProducerAndConsumer(consumerConfigAction =>
+            .ConfigureServices(services =>
             {
-                consumerConfigAction.WithBootstrapServers("localhost:9092");
-                consumerConfigAction.WithTopic("my-topic");
-                consumerConfigAction.WithGroupId("group-test");
-                consumerConfigAction.WithEnableAutoCommit(false);
-                // Add any other consumer settings as needed
-            },
+                services.AddKafkaProducerAndConsumer<string, string>(consumerConfigAction =>
+                {
+                    consumerConfigAction.WithBootstrapServers("localhost:9092");
+                    consumerConfigAction.WithTopic("my-topic");
+                    consumerConfigAction.WithGroupId("group-test");
+                    consumerConfigAction.WithEnableAutoCommit(false);
+                    // Add any other consumer settings as needed
+                },
             producerConfigAction =>
             {
                 producerConfigAction.WithBootstrapServers("localhost:9092");
@@ -23,10 +24,9 @@ internal class Program
                 // Add any other producer settings as needed
             });
 
-
-            services.AddHostedService<Worker>();
-        })
-        .Build();
+                services.AddHostedService<Worker>();
+            })
+            .Build();
 
         host.Run();
     }
