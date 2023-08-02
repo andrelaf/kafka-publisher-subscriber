@@ -1,21 +1,30 @@
 ﻿using Confluent.Kafka;
+using System;
 using System.Text;
 
 namespace KafkaPublisherSubscriber.Extensions
 {
     public static class HeadersExtension
     {
-        public static int GetRetryCountFromHeader(this Headers headers)
+        public static T GetHeaderAs<T>(this Headers headers, string headerKey)
         {
-            int retryCount = 0;
-
-            if (headers != null && headers.TryGetLastBytes("RetryCount", out byte[] retryCountBytes))
+            if (headers != null && headers.TryGetLastBytes(headerKey, out byte[] headerBytes))
             {
-                string retryCountString = Encoding.UTF8.GetString(retryCountBytes);
-                int.TryParse(retryCountString, out retryCount);
+                string headerString = Encoding.UTF8.GetString(headerBytes);
+
+                try
+                {
+                    return (T)Convert.ChangeType(headerString, typeof(T));
+                }
+                catch
+                {
+                    // Conversão falhou, retorna o valor padrão para o tipo T
+                    return default(T);
+                }
             }
 
-            return retryCount;
+            // Cabeçalho não encontrado, retorna o valor padrão para o tipo T
+            return default(T);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace KafkaPublisherSubscriber.Tests.Extensions
     public class HeadersExtensionTests
     {
         [Fact]
-        public void GetRetryCountFromHeader_HeadersContainValidRetryCount_ReturnsRetryCount()
+        public void GetHeaderAs_HeadersContainValidInteger_ReturnsInteger()
         {
             // Arrange
             var headers = new Headers
@@ -16,14 +16,14 @@ namespace KafkaPublisherSubscriber.Tests.Extensions
             };
 
             // Act
-            int retryCount = headers.GetRetryCountFromHeader();
+            int retryCount = headers.GetHeaderAs<int>("RetryCount");
 
             // Assert
             Assert.Equal(3, retryCount);
         }
 
         [Fact]
-        public void GetRetryCountFromHeader_HeadersContainInvalidRetryCount_ReturnsZero()
+        public void GetHeaderAs_HeadersContainInvalidInteger_ReturnsZero()
         {
             // Arrange
             var headers = new Headers
@@ -32,20 +32,20 @@ namespace KafkaPublisherSubscriber.Tests.Extensions
             };
 
             // Act
-            int retryCount = headers.GetRetryCountFromHeader();
+            int retryCount = headers.GetHeaderAs<int>("RetryCount");
 
             // Assert
             Assert.Equal(0, retryCount);
         }
 
         [Fact]
-        public void GetRetryCountFromHeader_HeadersDoNotContainRetryCount_ReturnsZero()
+        public void GetHeaderAs_HeadersDoNotContainInteger_ReturnsZero()
         {
             // Arrange
             var headers = new Headers();
 
             // Act
-            int retryCount = headers.GetRetryCountFromHeader();
+            int retryCount = headers.GetHeaderAs<int>("RetryCount");
 
             // Assert
             Assert.Equal(0, retryCount);
