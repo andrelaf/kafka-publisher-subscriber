@@ -1,9 +1,10 @@
-﻿namespace KafkaPublisherSubscriber.Tests.Consumers
-{
-    using Confluent.Kafka;
-    using KafkaPublisherSubscriber.Producers;
-    using Xunit;
+﻿
+using Confluent.Kafka;
+using KafkaPublisherSubscriber.Producers;
+using Xunit;
 
+namespace KafkaPublisherSubscriber.Tests.Consumers
+{
     public class KafkaProducerConfigBuilderTests
     {
         [Fact]
