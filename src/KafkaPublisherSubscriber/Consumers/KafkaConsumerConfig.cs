@@ -1,7 +1,9 @@
 ﻿using Confluent.Kafka;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KafkaPublisherSubscriber.Consumers
 {
+    [ExcludeFromCodeCoverage]
     public class KafkaConsumerConfig
     {
         public string GroupId { get; private set; }

@@ -90,9 +90,9 @@ namespace KafkaPublisherSubscriber.Tests.Handlers
 
 
             // Act
-            await handler.Subscribe(async (msg) =>
+            cancellationTokenSource.CancelAfter(500);
+            await handler.Subscribe((msg) =>
             {
-                cancellationTokenSource.CancelAfter(500);
                 // Simulate an error during message processing
                 throw new Exception("Simulated Error");
             }, cancellationToken);
@@ -152,9 +152,10 @@ namespace KafkaPublisherSubscriber.Tests.Handlers
             var handler = new KafkaMessageHandler<Ignore, string>(consumerMock.Object, producerMock.Object);
 
             // Act
-            await handler.Subscribe(async (msg) =>
+            cancellationTokenSource.CancelAfter(500);
+            await handler.Subscribe((msg) =>
             {
-                cancellationTokenSource.CancelAfter(500);
+
                 throw new Exception("Simulated Error"); 
             }, cancellationToken);
 

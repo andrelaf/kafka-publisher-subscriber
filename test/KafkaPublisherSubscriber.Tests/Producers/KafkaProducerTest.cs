@@ -13,11 +13,6 @@ namespace KafkaPublisherSubscriber.Tests.Producers
         {
             // Arrange
             var producerSettingsMock = new Mock<KafkaProducerConfig>();
-            var producerConfigAction = new Action<KafkaProducerConfigBuilder>(builder =>
-            {
-                producerSettingsMock.SetupGet(r => r.BootstrapServers).Returns("localhost:9092");
-                producerSettingsMock.SetupGet(r => r.Topic).Returns("my-topic");
-            });
 
             var kafkaProducerMock = new Mock<IKafkaProducer<Null, string>>();
             kafkaProducerMock.Setup(producer => producer.Settings).Returns(producerSettingsMock.Object);
@@ -57,11 +52,7 @@ namespace KafkaPublisherSubscriber.Tests.Producers
         {
             // Arrange
             var producerSettingsMock = new Mock<KafkaProducerConfig>();
-            var producerConfigAction = new Action<KafkaProducerConfigBuilder>(builder =>
-            {
-                producerSettingsMock.SetupGet(r => r.BootstrapServers).Returns("localhost:9092");
-                producerSettingsMock.SetupGet(r => r.Topic).Returns("my-topic");
-            });
+
 
             var kafkaProducerMock = new Mock<IKafkaProducer<Null, string>>();
             kafkaProducerMock.Setup(producer => producer.Settings).Returns(producerSettingsMock.Object);
@@ -98,7 +89,7 @@ namespace KafkaPublisherSubscriber.Tests.Producers
             Assert.Equal(0, result.Partition.Value);
             Assert.Equal(42, result.Offset.Value);
             Assert.Equal(message, result.Message.Value);
-            Assert.Equal(1, headers.GetRetryCountFromHeader());
+            Assert.Equal(1, headers.GetHeaderAs<int>("RetryCount"));
 
             // Verify that SendAsync was called with the correct arguments
             kafkaProducerMock.Verify(producer => producer.SendAsync(topic, message, It.IsAny<Null>(), headers), Times.Once());
@@ -109,11 +100,6 @@ namespace KafkaPublisherSubscriber.Tests.Producers
         {
             // Arrange
             var producerSettingsMock = new Mock<KafkaProducerConfig>();
-            var producerConfigAction = new Action<KafkaProducerConfigBuilder>(builder =>
-            {
-                producerSettingsMock.SetupGet(r => r.BootstrapServers).Returns("localhost:9092");
-                producerSettingsMock.SetupGet(r => r.Topic).Returns("my-topic");
-            });
 
             var kafkaProducerMock = new Mock<IKafkaProducer<Null, string>>();
             kafkaProducerMock.Setup(producer => producer.Settings).Returns(producerSettingsMock.Object);

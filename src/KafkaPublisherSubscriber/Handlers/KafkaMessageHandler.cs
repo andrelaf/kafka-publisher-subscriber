@@ -69,7 +69,7 @@ namespace KafkaPublisherSubscriber.Handlers
                     }
                     catch (Exception ex)
                     {
-                        int retryCount = consumeResult.Message.Headers.GetRetryCountFromHeader();
+                        int retryCount = consumeResult.Message.Headers.GetHeaderAs<int>("RetryCount");
                         await HandleError(_kafkaConsumer, consumeResult, ex, retryCount, cancellationToken);
                     }
                 }

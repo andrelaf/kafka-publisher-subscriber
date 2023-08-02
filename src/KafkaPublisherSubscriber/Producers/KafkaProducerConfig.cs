@@ -1,7 +1,9 @@
 ﻿using Confluent.Kafka;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KafkaPublisherSubscriber.Producers
 {
+    [ExcludeFromCodeCoverage]
     public class KafkaProducerConfig
     {
         public string BootstrapServers { get; private set; }

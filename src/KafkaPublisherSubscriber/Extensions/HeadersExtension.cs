@@ -18,13 +18,11 @@ namespace KafkaPublisherSubscriber.Extensions
                 }
                 catch
                 {
-                    // Conversão falhou, retorna o valor padrão para o tipo T
-                    return default(T);
+                    return default;
                 }
             }
 
-            // Cabeçalho não encontrado, retorna o valor padrão para o tipo T
-            return default(T);
+            return default;
         }
     }
 }
