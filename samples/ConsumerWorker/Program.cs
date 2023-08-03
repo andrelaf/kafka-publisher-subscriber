@@ -1,5 +1,5 @@
 using ConsumerWorker;
-using KafkaPublisherSubscriber;
+using KafkaPublisherSubscriber.Extensions;
 
 internal class Program
 {

@@ -4,7 +4,7 @@ using KafkaPublisherSubscriber.Extensions;
 
 namespace KafkaPublisherSubscriber.Tests.Extensions
 {
-    public class HeadersExtensionTests
+    public class KafkaHeadersExtensionTest
     {
         [Fact]
         public void GetHeaderAs_HeadersContainValidInteger_ReturnsInteger()

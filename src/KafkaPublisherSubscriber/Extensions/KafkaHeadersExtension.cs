@@ -4,7 +4,7 @@ using System.Text;
 
 namespace KafkaPublisherSubscriber.Extensions
 {
-    public static class HeadersExtension
+    public static class KafkaHeadersExtension
     {
         public static T GetHeaderAs<T>(this Headers headers, string headerKey)
         {

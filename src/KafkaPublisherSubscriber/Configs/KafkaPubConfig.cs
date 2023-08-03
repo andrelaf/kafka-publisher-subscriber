@@ -1,13 +1,13 @@
 ﻿using Confluent.Kafka;
 using System.Diagnostics.CodeAnalysis;
 
-namespace KafkaPublisherSubscriber.Producers
+namespace KafkaPublisherSubscriber.Configs
 {
     [ExcludeFromCodeCoverage]
-    public class KafkaProducerConfig
+    public sealed class KafkaPubConfig
     {
-        public string BootstrapServers { get; private set; }
-        public string Topic { get; private set; }
+        public string? BootstrapServers { get; private set; }
+        public string? Topic { get; private set; }
         public bool? EnableIdempotence { get; private set; }
         public bool? ApiVersionRequest { get; private set; }
         public int MessageSendMaxRetries { get; private set; }

@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Version>1.0.0</Version>
 		<Authors>André Lara Amorim de Freitas</Authors>
@@ -16,11 +18,14 @@
 		<PackageReleaseNotes>
 			- Versão 1.0.0: Primeiro lançamento do pacote KafkaPublisherSubscriber.
 		</PackageReleaseNotes>
+		<UserSecretsId>58814234-b974-44f4-a381-5c257eb3c8ca</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Confluent.Kafka" Version="2.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
 	</ItemGroup>
 
 </Project>
+

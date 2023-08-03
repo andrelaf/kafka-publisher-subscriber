@@ -1,5 +1,5 @@
 using ProducerWorker;
-using KafkaPublisherSubscriber;
+using KafkaPublisherSubscriber.Extensions;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .UseEnvironment("Staging")
