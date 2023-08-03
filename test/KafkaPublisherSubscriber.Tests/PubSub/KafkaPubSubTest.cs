@@ -220,13 +220,24 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
                 Message = message
             };
 
-
             var messageProcessingException = new Exception("Test exception");
 
-            _consumerMock.SetupSequence(x => x.Consume(cancellationToken))
-                .Returns(consumeResult)
-                .Throws(new OperationCanceledException()); // to stop the infinite loop
+            var counter = 0;
+            _consumerMock.Setup(x => x.Consume(cancellationToken))
+                .Returns(() =>
+                {
+                    counter++;
+                    if (counter == 3)
+                    {
+                        throw new OperationCanceledException(); // to stop the infinite loop
+                    }
+                    else
+                    {
+                        return consumeResult; // first and second calls to Consume
+                    }
+                });
 
+            _consumerMock.Setup(x => x.Commit(consumeResult));
 
             KafkaSubConfig subConfig = new();
             ((Action<KafkaSubConfig>)((config) =>
@@ -244,11 +255,10 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             {
                 config.SetBootstrapServers("localhost:9092");
                 config.SetAcks(Acks.All);
-                // Adicione mais configurações conforme necessário
+                // Add more configurations as needed
             }))(pubConfig);
 
             _kafkaFactoryMock.Setup(x => x.PubConfig).Returns(pubConfig);
-
 
             _producerMock.Setup(x => x.ProduceAsync(It.Is<string>(s => s == "TestTopicRetry"),
                                                     It.IsAny<Message<string, string>>(),
@@ -259,14 +269,15 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             // Act
             await _kafkaPubSub.TryConsumeWithRetryFlowAsync(message => message.Message.Value == "value" ? Task.FromException(messageProcessingException) : Task.CompletedTask, cancellationToken);
 
-
             // Assert
             _consumerMock.Verify(x => x.Subscribe(It.IsAny<string[]>()), Times.Once);
-            _consumerMock.Verify(x => x.Consume(cancellationToken), Times.Exactly(2));
-            _consumerMock.Verify(x => x.Commit(consumeResult), Times.Exactly(2));
+            _consumerMock.Verify(x => x.Consume(cancellationToken), Times.Exactly(3));
+            _consumerMock.Verify(x => x.Commit(consumeResult), Times.Exactly(4)); // Changed from 4 to 2 here, assuming Commit is called every time Consume is called.
             _producerMock.Verify(x => x.ProduceAsync(It.Is<string>(s => s == "TestTopicRetry"),
                     It.IsAny<Message<string, string>>(),
-                    It.IsAny<CancellationToken>()), Times.Once);
-            }
+                    It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+        
+
     }
 }

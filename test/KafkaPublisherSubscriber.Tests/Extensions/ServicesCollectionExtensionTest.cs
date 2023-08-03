@@ -8,13 +8,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace KafkaPublisherSubscriber.Tests
 {
-    public class ServicesCollectionExtension
+    public class ServicesCollectionExtensionTest
     {
         private readonly IServiceCollection _services;
         private Action<KafkaSubConfig>? _kafkaSubConfigAction;
         private Action<KafkaPubConfig>? _kafkaPubConfigAction;
 
-        public ServicesCollectionExtension()
+        public ServicesCollectionExtensionTest()
         {
             _services = new ServiceCollection();
         }

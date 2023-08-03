@@ -53,6 +53,9 @@ namespace KafkaPublisherSubscriber.PubSub
 
             _producer!.Flush(TimeSpan.FromSeconds(10));
         }
+
+
+
         public async Task<ConsumeResult<TKey, TValue>> ConsumeAsync(CancellationToken cancellationToken)
         {
             EnsurConsumerConnection();
