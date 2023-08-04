@@ -112,7 +112,7 @@ namespace KafkaPublisherSubscriber.PubSub
                         if (consumeResult.IsPartitionEOF)
                         {
                             Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
-                            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof)); // Insira um atraso conforme necessário
+                            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
                             continue;
                         }
 
