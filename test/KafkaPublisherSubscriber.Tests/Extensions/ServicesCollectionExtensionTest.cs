@@ -34,10 +34,8 @@ namespace KafkaPublisherSubscriber.Tests
             // Assert
             Assert.NotNull(serviceCollection);
             Assert.IsAssignableFrom<IServiceCollection>(serviceCollection);
-            Assert.Equal(2, serviceCollection.Count);
+            Assert.Equal(1, serviceCollection.Count);
             Assert.Contains(serviceCollection, service => service.ServiceType == typeof(IPubSubImplementationMock));
-            bool containsKafkaFactory = serviceCollection.Any(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IKafkaFactory));
-            Assert.True(containsKafkaFactory, "Expected IKafkaFactory to be registered in the service collection, but it was not.");
         }
 
 
@@ -49,6 +47,7 @@ namespace KafkaPublisherSubscriber.Tests
             {
                 config.SetBootstrapServers("localhost:9092");
                 config.SetTopic("test-topic");
+                config.SetGroupId("group-test");
             };
 
             // Act
@@ -57,10 +56,8 @@ namespace KafkaPublisherSubscriber.Tests
             // Assert
             Assert.NotNull(serviceCollection);
             Assert.IsAssignableFrom<IServiceCollection>(serviceCollection);
-            Assert.Equal(2, serviceCollection.Count);
+            Assert.Equal(1, serviceCollection.Count);
             Assert.Contains(serviceCollection, service => service.ServiceType == typeof(IPubSubImplementationMock));
-            bool containsKafkaFactory = serviceCollection.Any(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IKafkaFactory));
-            Assert.True(containsKafkaFactory, "Expected IKafkaFactory to be registered in the service collection, but it was not.");
         }
 
         [Fact]

@@ -8,10 +8,10 @@ namespace KafkaPublisherSubscriber.Configs
     {
         public string? BootstrapServers { get; private set; }
         public string? Topic { get; private set; }
-        public bool? EnableIdempotence { get; private set; }
+        public bool EnableIdempotence { get; private set; } = false;
         public bool? ApiVersionRequest { get; private set; }
-        public int MessageSendMaxRetries { get; private set; }
-        public Acks? Acks { get; private set; }
+        public int MessageSendMaxRetries { get; private set; } = 10;
+        public Acks Acks { get; private set; } = Acks.Leader;
         public int? MaxInFlight { get; private set; }
 
         public void SetBootstrapServers(string bootstrapServers)
@@ -22,9 +22,12 @@ namespace KafkaPublisherSubscriber.Configs
         {
             Topic = topic;
         }
-        public void SetEnableIdempotence(bool enableIdempotence)
+        public void SetIdempotenceEnabled()
         {
-            EnableIdempotence = enableIdempotence;
+            EnableIdempotence = true;
+            MaxInFlight = 5;
+            MessageSendMaxRetries = 3;
+            Acks = Acks.All;
         }
         public void SetApiVersionRequest(bool apiVersionRequest)
         {

@@ -1,5 +1,4 @@
 ﻿using KafkaPublisherSubscriber.Configs;
-using KafkaPublisherSubscriber.Factories;
 using KafkaPublisherSubscriber.PubSub;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,20 +23,18 @@ namespace KafkaPublisherSubscriber.Extensions
             {
                 subConfig = new KafkaSubConfig();
                 subConfigAction.Invoke(subConfig);
+                KafkaConfigValidator.ValidateSubConfig(subConfig);
             }
-
+           
             KafkaPubConfig? pubConfig = null;
             if (pubConfigAction != null)
             {
                 pubConfig = new KafkaPubConfig();
                 pubConfigAction.Invoke(pubConfig);
+                KafkaConfigValidator.ValidatePubConfig(pubConfig);
             }
 
-
-            services.AddSingleton<IKafkaFactory>(new KafkaFactory(subConfig, pubConfig));
-            services.AddScoped<TService, TImplementation>();
-            //services.AddScoped<TService, TImplementation>(s => (TImplementation)Activator.CreateInstance(typeof(TImplementation), subConfig, pubConfig));
-
+            services.AddScoped<TService, TImplementation>(s => (TImplementation)Activator.CreateInstance(typeof(TImplementation), subConfig, pubConfig)!);
             return services;
         }
 

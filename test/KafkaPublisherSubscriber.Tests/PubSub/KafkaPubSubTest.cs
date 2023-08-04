@@ -2,7 +2,6 @@
 using KafkaPublisherSubscriber.Configs;
 using KafkaPublisherSubscriber.Factories;
 using KafkaPublisherSubscriber.PubSub;
-using KafkaPublisherSubscriber.Tests.Mocks;
 using Moq;
 
 namespace KafkaPublisherSubscriber.Tests.PubSub
@@ -45,16 +44,19 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             ((Action<KafkaPubConfig>)((config) =>
             {
                 config.SetBootstrapServers("localhost:9092");
+                config.SetTopic("topic");
                 config.SetAcks(Acks.All);
-                // Adicione mais configurações conforme necessário
             }))(pubConfig);
 
             _kafkaFactoryMock.Setup(x => x.PubConfig).Returns(pubConfig);
 
+            _kafkaFactoryMock.Setup(x => x.CreateKafkaMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Headers>()))
+                             .Returns(kafkaMessage);
+
             var deliveryResultMock = new Mock<DeliveryResult<string, string>>();
             _producerMock.Setup(x => x.ProduceAsync(
                 It.IsAny<string>(),
-                It.Is<Message<string, string>>(m => m.Key == key && m.Value == value),
+               kafkaMessage,
                 It.IsAny<CancellationToken>()
                 )).ReturnsAsync(deliveryResultMock.Object);
 
@@ -120,7 +122,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             ((Action<KafkaPubConfig>)((config) =>
             {
                 config.SetBootstrapServers("localhost:9092");
-                config.SetAcks(Acks.All);
+                config.SetTopic("topic");
                 // Adicione mais configurações conforme necessário
             }))(pubConfig);
 

@@ -1,7 +1,6 @@
 ﻿using Confluent.Kafka;
 using System.Text.Json;
 using System.Text;
-using System;
 
 namespace KafkaPublisherSubscriber.Serializers;
 
@@ -23,9 +22,9 @@ public class JsonDeserializerUtf8<T> : IDeserializer<T>
     public T Deserialize(ReadOnlySpan<byte> data, bool isNull, SerializationContext context)
     {
         if (isNull)
-            return default;
+            return default!;
 
         var jsonString = encoder.GetString(data.ToArray());
-        return JsonSerializer.Deserialize<T>(jsonString, jsonOptions);
+        return JsonSerializer.Deserialize<T>(jsonString, jsonOptions)!;
     }
 }

@@ -9,14 +9,14 @@ namespace KafkaPublisherSubscriber.Configs
         public string? GroupId { get; private set; }
         public string? BootstrapServers { get; private set; }
         public bool EnableAutoCommit { get; private set; } = false;
-        public int? StatisticsIntervalMs { get; private set; } = 5000;
-        public int? SessionTimeoutMs { get; private set; } = 6000;
-        public bool? EnablePartitionEof { get; private set; } = true;
+        public int? StatisticsIntervalMs { get; private set; } = 10000;
+        public int? SessionTimeoutMs { get; private set; } = 10000;
+        public bool EnablePartitionEof { get; private set; } = false;
         public bool? ApiVersionRequest { get; private set; }
         public string? Topic { get; private set; }
         public string? TopicRetry { get; private set; }
         public string? TopicDeadLetter { get; private set; }
-        public AutoOffsetReset? AutoOffsetReset { get; private set; }
+        public AutoOffsetReset AutoOffsetReset { get; private set; } = AutoOffsetReset.Latest;
         public int MaxRetryAttempts { get; private set; } = 3;
         public int DelayInSecondsPartitionEof { get; private set; } = 1;
 
@@ -51,8 +51,6 @@ namespace KafkaPublisherSubscriber.Configs
         public void SetTopic(string topic)
         {
             Topic = topic;
-            TopicRetry = $"{topic}-RETRY";
-            TopicDeadLetter = $"{topic}-DLQ";
         }
         public void SetTopicRetry(string topicRetry)
         {
