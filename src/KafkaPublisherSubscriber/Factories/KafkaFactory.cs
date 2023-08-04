@@ -12,6 +12,7 @@ namespace KafkaPublisherSubscriber.Factories
         public KafkaPubConfig PubConfig { get; }
         IConsumer<TKey, TValue> CreateConsumer<TKey, TValue>();
         IProducer<TKey, TValue> CreateProducer<TKey, TValue>();
+        Message<TKey, TValue> CreateKafkaMessage<TKey, TValue>(TValue message, TKey key = default!, Headers headers = default!);
     }
 
     [ExcludeFromCodeCoverage]
@@ -69,6 +70,17 @@ namespace KafkaPublisherSubscriber.Factories
                 .SetKeySerializer(new JsonSerializerUtf8<TKey>())
                 .SetValueSerializer(new JsonSerializerUtf8<TValue>())
                 .Build();
+        }
+
+
+        public Message<TKey, TValue> CreateKafkaMessage<TKey, TValue>(TValue message, TKey key = default!, Headers headers = default!)
+        {
+            return new Message<TKey, TValue>
+            {
+                Key = key,
+                Value = message,
+                Headers = headers
+            };
         }
     }
 }

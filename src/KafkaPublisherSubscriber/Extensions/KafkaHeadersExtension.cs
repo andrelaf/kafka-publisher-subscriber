@@ -6,7 +6,7 @@ namespace KafkaPublisherSubscriber.Extensions
 {
     public static class KafkaHeadersExtension
     {
-        public static T GetHeaderAs<T>(this Headers headers, string headerKey)
+        public static T? GetHeaderAs<T>(this Headers headers, string headerKey)
         {
             if (headers != null && headers.TryGetLastBytes(headerKey, out byte[] headerBytes))
             {

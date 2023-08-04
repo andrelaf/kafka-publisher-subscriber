@@ -1,6 +1,7 @@
 ﻿using Confluent.Kafka;
 using KafkaPublisherSubscriber.Extensions;
 using KafkaPublisherSubscriber.Factories;
+using KafkaPublisherSubscriber.Results;
 using System.Text;
 
 namespace KafkaPublisherSubscriber.PubSub
@@ -21,20 +22,11 @@ namespace KafkaPublisherSubscriber.PubSub
 
         public async Task<DeliveryResult<TKey, TValue>> SendAsync(TValue message, TKey key = default!, Headers headers = default!)
         {
-            Message<TKey, TValue> kafkaMessage = CreateKafkaMessage(message, key, headers);
+            Message<TKey, TValue> kafkaMessage = _kafkaFactory.CreateKafkaMessage<TKey, TValue>(message, key, headers);
 
             return await SendAsync(_kafkaFactory.PubConfig.Topic!, kafkaMessage);
         }
 
-        private static Message<TKey, TValue> CreateKafkaMessage(TValue message, TKey key, Headers headers)
-        {
-            return new Message<TKey, TValue>
-            {
-                Key = key,
-                Value = message,
-                Headers = headers
-            };
-        }
 
         private async Task<DeliveryResult<TKey, TValue>> SendAsync(string topic, Message<TKey, TValue> kafkaMessage)
         {
@@ -43,15 +35,27 @@ namespace KafkaPublisherSubscriber.PubSub
             return await _producer!.ProduceAsync(topic, kafkaMessage);
         }
 
-        public async Task SendBatchAsync(IEnumerable<TValue> messages)
+        public async Task<BatchSendResult<TKey, TValue>> SendBatchAsync(IEnumerable<Message<TKey, TValue>> messages)
         {
+            var result = new BatchSendResult<TKey, TValue>();
+
             foreach (var message in messages)
             {
-                var result = await SendAsync(_kafkaFactory.PubConfig.Topic!, new Message<TKey, TValue> { Value = message });
-                Console.WriteLine($"Mensagem '{message}' enviada para partição: {result.Partition}, Offset: {result.Offset}");
+                try
+                {
+                    var deliveryResult = await SendAsync(_kafkaFactory.PubConfig.Topic!, message);
+                    result.Successes.Add(deliveryResult);
+                    Console.WriteLine($"Mensagem '{message}' enviada para partição: {deliveryResult.Partition}, Offset: {deliveryResult.Offset}");
+                }
+                catch (Exception e)
+                {
+                    result.Failures.Add((message, e));
+                }
             }
 
             _producer!.Flush(TimeSpan.FromSeconds(10));
+
+            return result;
         }
 
 
@@ -108,6 +112,7 @@ namespace KafkaPublisherSubscriber.PubSub
                         if (consumeResult.IsPartitionEOF)
                         {
                             Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
+                            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof)); // Insira um atraso conforme necessário
                             continue;
                         }
 
@@ -187,7 +192,7 @@ namespace KafkaPublisherSubscriber.PubSub
                 { "RetryCount", Encoding.UTF8.GetBytes(retryCount.ToString()) }
             };
 
-            Message<TKey, TValue> kafkaMessage = CreateKafkaMessage(message, key, headers);
+            Message<TKey, TValue> kafkaMessage = _kafkaFactory.CreateKafkaMessage(message, key, headers);
 
             _ = await SendAsync(_kafkaFactory.SubConfig.TopicRetry!, kafkaMessage);
         }

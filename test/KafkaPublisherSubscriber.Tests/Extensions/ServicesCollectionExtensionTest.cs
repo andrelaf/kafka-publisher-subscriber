@@ -1,8 +1,6 @@
-﻿using Castle.Components.DictionaryAdapter;
-using KafkaPublisherSubscriber.Configs;
+﻿using KafkaPublisherSubscriber.Configs;
 using KafkaPublisherSubscriber.Extensions;
 using KafkaPublisherSubscriber.Factories;
-using KafkaPublisherSubscriber.PubSub;
 using KafkaPublisherSubscriber.Tests.Mocks;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,8 +9,8 @@ namespace KafkaPublisherSubscriber.Tests
     public class ServicesCollectionExtensionTest
     {
         private readonly IServiceCollection _services;
-        private Action<KafkaSubConfig>? _kafkaSubConfigAction;
-        private Action<KafkaPubConfig>? _kafkaPubConfigAction;
+        private Action<KafkaSubConfig>? _subConfigAction;
+        private Action<KafkaPubConfig>? _pubConfigAction;
 
         public ServicesCollectionExtensionTest()
         {
@@ -23,16 +21,39 @@ namespace KafkaPublisherSubscriber.Tests
         public void AddKafkaConsumer_OnlyPubConfig_DoesNotThrowException()
         {
             // Arrange
-            _kafkaPubConfigAction = config =>
+            _pubConfigAction = config =>
             {
                 config.SetBootstrapServers("localhost:9092");
                 config.SetTopic("test-topic");
             };
 
             // Act
-            var serviceCollection = _services.AddKafkaPubSub<IPubSubImplementationMock, PubSubImplementationMock>(_kafkaSubConfigAction!, _kafkaPubConfigAction);
+            var serviceCollection = _services.AddKafkaPubSub<IPubSubImplementationMock, PubSubImplementationMock>(_subConfigAction!, _pubConfigAction);
 
             // Assert
+            // Assert
+            Assert.NotNull(serviceCollection);
+            Assert.IsAssignableFrom<IServiceCollection>(serviceCollection);
+            Assert.Equal(2, serviceCollection.Count);
+            Assert.Contains(serviceCollection, service => service.ServiceType == typeof(IPubSubImplementationMock));
+            bool containsKafkaFactory = serviceCollection.Any(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IKafkaFactory));
+            Assert.True(containsKafkaFactory, "Expected IKafkaFactory to be registered in the service collection, but it was not.");
+        }
+
+
+        [Fact]
+        public void AddKafkaConsumer_OnlySubConfig_DoesNotThrowException()
+        {
+            // Arrange
+            _subConfigAction = config =>
+            {
+                config.SetBootstrapServers("localhost:9092");
+                config.SetTopic("test-topic");
+            };
+
+            // Act
+            var serviceCollection = _services.AddKafkaPubSub<IPubSubImplementationMock, PubSubImplementationMock>(_subConfigAction, _pubConfigAction!);
+
             // Assert
             Assert.NotNull(serviceCollection);
             Assert.IsAssignableFrom<IServiceCollection>(serviceCollection);

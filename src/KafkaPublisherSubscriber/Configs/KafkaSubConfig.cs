@@ -16,8 +16,9 @@ namespace KafkaPublisherSubscriber.Configs
         public string? Topic { get; private set; }
         public string? TopicRetry { get; private set; }
         public string? TopicDeadLetter { get; private set; }
-        public int MaxRetryAttempts { get; private set; } = 3;
         public AutoOffsetReset? AutoOffsetReset { get; private set; }
+        public int MaxRetryAttempts { get; private set; } = 3;
+        public int DelayInSecondsPartitionEof { get; private set; } = 1;
 
         public void SetGroupId(string groupId)
         {
@@ -61,13 +62,20 @@ namespace KafkaPublisherSubscriber.Configs
         {
             TopicDeadLetter = topicDeadLetter;
         }
+
+        public void SetAutoOffsetReset(AutoOffsetReset autoOffsetReset)
+        {
+            AutoOffsetReset = autoOffsetReset;
+        }
+
         public void SetMaxRetryAttempts(int maxRetryAttempts)
         {
             MaxRetryAttempts = maxRetryAttempts;
         }
-        public void SetAutoOffsetReset(AutoOffsetReset autoOffsetReset)
+
+        public void SetDelayInSecondsPartitionEof(int delayInSecondsPartitionEof)
         {
-            AutoOffsetReset = autoOffsetReset;
+            DelayInSecondsPartitionEof = delayInSecondsPartitionEof;
         }
     }
 }

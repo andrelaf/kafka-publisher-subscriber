@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using KafkaPublisherSubscriber.Results;
 
 namespace KafkaPublisherSubscriber.PubSub
 {
@@ -6,7 +7,7 @@ namespace KafkaPublisherSubscriber.PubSub
     public interface IKafkaPubSub<TKey, TValue> : IKafkaPubSub, IDisposable
     {
         Task<DeliveryResult<TKey, TValue>> SendAsync(TValue message, TKey key = default!, Headers headers = default!);
-        Task SendBatchAsync(IEnumerable<TValue> messages);
+        Task<BatchSendResult<TKey, TValue>> SendBatchAsync(IEnumerable<Message<TKey, TValue>> messages);
         Task<ConsumeResult<TKey, TValue>> ConsumeAsync(CancellationToken cancellationToken);
         Task CommitAsync(ConsumeResult<TKey, TValue> consumeResult);
         void Subscribe(string[] topics);

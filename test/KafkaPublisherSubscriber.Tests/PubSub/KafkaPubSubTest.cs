@@ -91,17 +91,28 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
         public async Task SendBatchAsync_ValidInput_CallsProducerProduceAsyncForEachMessage()
         {
             // Arrange
-            var messages = new List<string>
+            var messages = new List<(string Key, string Value)>
             {
-                "Mensage 1",
-                "Message 2",
-                "Message 3"
+                ("Key 1", "Message 1"),
+                ("Key 2", "Message 2"),
+                ("Key 3", "Message 3"),
             };
+
+            foreach (var (Key, Value) in messages)
+            {
+                _kafkaFactoryMock.Setup(x => x.CreateKafkaMessage(Value, Key, It.IsAny<Headers>()))
+                    .Returns(new Message<string, string>
+                    {
+                        Key = Key,
+                        Value = Value,
+                        Headers = new Headers()
+                    });
+            }
 
             var deliveryResultMock = new Mock<DeliveryResult<string, string>>();
             _producerMock.Setup(x => x.ProduceAsync(
                 It.IsAny<string>(),
-                It.Is<Message<string, string>>(m => messages.Contains(m.Value)),
+                It.IsAny<Message<string, string>>(),
                 It.IsAny<CancellationToken>()
                 )).ReturnsAsync(deliveryResultMock.Object);
 
@@ -115,14 +126,14 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
 
             _kafkaFactoryMock.Setup(x => x.PubConfig).Returns(pubConfig);
 
-
             // Act
-            await _kafkaPubSub.SendBatchAsync(messages);
+            var kafkaMessages = messages.Select(m => _kafkaFactoryMock.Object.CreateKafkaMessage(m.Value, m.Key)).ToList();
+            await _kafkaPubSub.SendBatchAsync(kafkaMessages);
 
             // Assert
             _producerMock.Verify(x => x.ProduceAsync(
                 It.IsAny<string>(),
-                It.Is<Message<string, string>>(m => messages.Contains(m.Value)),
+                It.IsAny<Message<string, string>>(),
                 It.IsAny<CancellationToken>()
                 ), Times.Exactly(messages.Count));
         }
