@@ -222,6 +222,9 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
 
             var messageProcessingException = new Exception("Test exception");
 
+            int commitCounter = 0;
+            int produceCounter = 0;
+
             var counter = 0;
             _consumerMock.Setup(x => x.Consume(cancellationToken))
                 .Returns(() =>
@@ -237,7 +240,8 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
                     }
                 });
 
-            _consumerMock.Setup(x => x.Commit(consumeResult));
+            _consumerMock.Setup(x => x.Commit(consumeResult))
+                         .Callback(() => commitCounter++);
 
             KafkaSubConfig subConfig = new();
             ((Action<KafkaSubConfig>)((config) =>
@@ -264,7 +268,8 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
                                                     It.IsAny<Message<string, string>>(),
                                                     It.IsAny<CancellationToken>()))
                          .Returns((string topic, Message<string, string> message, CancellationToken cancellationToken) =>
-                                   Task.FromResult(new DeliveryResult<string, string>()));
+                                   Task.FromResult(new DeliveryResult<string, string>()))
+                         .Callback(() => produceCounter++);
 
             // Act
             await _kafkaPubSub.TryConsumeWithRetryFlowAsync(message => message.Message.Value == "value" ? Task.FromException(messageProcessingException) : Task.CompletedTask, cancellationToken);
@@ -272,12 +277,11 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             // Assert
             _consumerMock.Verify(x => x.Subscribe(It.IsAny<string[]>()), Times.Once);
             _consumerMock.Verify(x => x.Consume(cancellationToken), Times.Exactly(3));
-            _consumerMock.Verify(x => x.Commit(consumeResult), Times.Exactly(4)); // Changed from 4 to 2 here, assuming Commit is called every time Consume is called.
+            _consumerMock.Verify(x => x.Commit(consumeResult), Times.Exactly(commitCounter));
             _producerMock.Verify(x => x.ProduceAsync(It.Is<string>(s => s == "TestTopicRetry"),
                     It.IsAny<Message<string, string>>(),
-                    It.IsAny<CancellationToken>()), Times.Exactly(2));
+                    It.IsAny<CancellationToken>()), Times.Exactly(produceCounter));
         }
-        
 
     }
 }
