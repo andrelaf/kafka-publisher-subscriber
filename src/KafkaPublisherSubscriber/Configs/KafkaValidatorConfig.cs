@@ -2,7 +2,7 @@
 
 namespace KafkaPublisherSubscriber.Configs
 {
-    public static class KafkaConfigValidator
+    public static class KafkaValidatorConfig
     {
         public static void ValidatePubConfig(KafkaPubConfig pubConfig)
         {

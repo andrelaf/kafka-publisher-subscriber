@@ -147,7 +147,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             var consumeResult = new ConsumeResult<string, string>();
 
             // Act
-            await _kafkaPubSub.CommitAsync(consumeResult);
+            await _kafkaPubSub.CommitAsync(consumeResult, new CancellationTokenSource().Token);
 
             // Assert
             _consumerMock.Verify(c => c.Commit(consumeResult), Times.Once);

@@ -6,11 +6,11 @@ namespace KafkaPublisherSubscriber.PubSub
     public interface IKafkaPubSub { }
     public interface IKafkaPubSub<TKey, TValue> : IKafkaPubSub, IDisposable
     {
-        Task<DeliveryResult<TKey, TValue>> SendAsync(TValue message, TKey key = default!, Headers headers = default!);
-        Task<BatchSendResult<TKey, TValue>> SendBatchAsync(IEnumerable<Message<TKey, TValue>> messages);
+        Task<DeliveryResult<TKey, TValue>> SendAsync(TValue message, TKey key = default!, Headers headers = default!, CancellationToken cancellationToken = default!);
+        Task<BatchSendResult<TKey, TValue>> SendBatchAsync(IEnumerable<Message<TKey, TValue>> kafkaMessages, CancellationToken cancellationToken = default!);
         Task<ConsumeResult<TKey, TValue>> ConsumeAsync(CancellationToken cancellationToken);
-        Task CommitAsync(ConsumeResult<TKey, TValue> consumeResult);
+        Task CommitAsync(ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancelationToken);
         void Subscribe(string[] topics);
-        Task TryConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, CancellationToken cancellationToken);
+        Task TryConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, CancellationToken cancellationToken = default!);
     }
 }

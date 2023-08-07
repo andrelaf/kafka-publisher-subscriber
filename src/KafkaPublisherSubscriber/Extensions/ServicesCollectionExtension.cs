@@ -6,13 +6,20 @@ namespace KafkaPublisherSubscriber.Extensions
 {
     public static class ServicesCollectionExtension
     {
-        public static IServiceCollection AddKafkaPubSub<TService, TImplementation>(this IServiceCollection services,
-                                                                                     Action<KafkaSubConfig> subConfigAction = default!,
-                                                                                     Action<KafkaPubConfig> pubConfigAction = default!)
-            where TService : class, IKafkaPubSub
-            where TImplementation : class, TService
+        public static IServiceCollection AddKafkaTypedPubSub<TKey, TValue>(this IServiceCollection services,
+                                                         Action<KafkaSubConfig> subConfigAction = default!,
+                                                                        Action<KafkaPubConfig> pubConfigAction = default!)
         {
-            if(subConfigAction is null && pubConfigAction is null)
+            return services.AddKafkaPubSub<IKafkaPubSub<TKey, TValue>, KafkaPubSub<TKey, TValue>>(subConfigAction, pubConfigAction);
+        }
+
+        public static IServiceCollection AddKafkaPubSub<TService, TImplementation>(this IServiceCollection services,
+                                                                             Action<KafkaSubConfig> subConfigAction = default!,
+                                                                             Action<KafkaPubConfig> pubConfigAction = default!)
+       where TService : class
+       where TImplementation : class, TService
+        {
+            if (subConfigAction is null && pubConfigAction is null)
             {
                 throw new ArgumentException($"{nameof(subConfigAction)} and/or {nameof(pubConfigAction)} are required.");
             }
@@ -23,19 +30,21 @@ namespace KafkaPublisherSubscriber.Extensions
             {
                 subConfig = new KafkaSubConfig();
                 subConfigAction.Invoke(subConfig);
-                KafkaConfigValidator.ValidateSubConfig(subConfig);
+                KafkaValidatorConfig.ValidateSubConfig(subConfig);
             }
-           
+
             KafkaPubConfig? pubConfig = null;
             if (pubConfigAction != null)
             {
                 pubConfig = new KafkaPubConfig();
                 pubConfigAction.Invoke(pubConfig);
-                KafkaConfigValidator.ValidatePubConfig(pubConfig);
+                KafkaValidatorConfig.ValidatePubConfig(pubConfig);
             }
 
             services.AddScoped<TService, TImplementation>(s => (TImplementation)Activator.CreateInstance(typeof(TImplementation), subConfig, pubConfig)!);
             return services;
+
+
         }
 
     }

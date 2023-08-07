@@ -1,13 +1,8 @@
 ﻿using KafkaPublisherSubscriber.Configs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KafkaPublisherSubscriber.Tests.Configs
 {
-    public class KafkaConfigValidatorTests
+    public class KafkaValidatorConfigTest
     {
         [Fact]
         public void ValidatePubConfig_WhenBootstrapServersIsNull_ThrowsArgumentNullException()
@@ -15,7 +10,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             var pubConfig = new KafkaPubConfig();
             pubConfig.SetTopic("testTopic");
 
-            Exception ex = Record.Exception(() => KafkaConfigValidator.ValidatePubConfig(pubConfig));
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidatePubConfig(pubConfig));
 
             Assert.IsType<ArgumentNullException>(ex);
         }
@@ -26,7 +21,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             var pubConfig = new KafkaPubConfig();
             pubConfig.SetBootstrapServers("localhost:9092");
 
-            Exception ex = Record.Exception(() => KafkaConfigValidator.ValidatePubConfig(pubConfig));
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidatePubConfig(pubConfig));
 
             Assert.IsType<ArgumentNullException>(ex);
         }
@@ -39,7 +34,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             pubConfig.SetTopic("testTopic");
             pubConfig.SetMessageSendMaxRetries(11);
 
-            Exception ex = Record.Exception(() => KafkaConfigValidator.ValidatePubConfig(pubConfig));
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidatePubConfig(pubConfig));
 
             Assert.IsType<ArgumentException>(ex);
         }
@@ -52,7 +47,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
 
-            Exception ex = Record.Exception(() => KafkaConfigValidator.ValidateSubConfig(subConfig));
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
 
             Assert.IsType<ArgumentNullException>(ex);
         }
@@ -64,7 +59,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetGroupId("testGroup");
 
-            Exception ex = Record.Exception(() => KafkaConfigValidator.ValidateSubConfig(subConfig));
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
 
             Assert.IsType<ArgumentNullException>(ex);
         }
@@ -76,7 +71,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
 
-            Exception ex = Record.Exception(() => KafkaConfigValidator.ValidateSubConfig(subConfig));
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
 
             Assert.IsType<ArgumentNullException>(ex);
         }
@@ -91,7 +86,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetEnablePartitionEof(true);
             subConfig.SetDelayInSecondsPartitionEof(0);
 
-            Exception ex = Record.Exception(() => KafkaConfigValidator.ValidateSubConfig(subConfig));
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
 
             Assert.IsType<ArgumentException>(ex);
         }
