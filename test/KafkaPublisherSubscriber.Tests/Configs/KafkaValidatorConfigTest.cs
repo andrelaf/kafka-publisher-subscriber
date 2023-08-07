@@ -85,6 +85,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetGroupId("testGroup");
             subConfig.SetEnablePartitionEof(true);
             subConfig.SetDelayInSecondsPartitionEof(0);
+            subConfig.SetConsumerLimit(5);
 
             Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
 

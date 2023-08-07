@@ -40,6 +40,7 @@ namespace KafkaPublisherSubscriber.Configs
             ArgumentNullException.ThrowIfNull(subConfig?.BootstrapServers);
             ArgumentNullException.ThrowIfNull(subConfig?.Topic);
             ArgumentNullException.ThrowIfNull(subConfig?.GroupId);
+            ArgumentNullException.ThrowIfNull(subConfig?.ConsumerLimit);
 
             if (subConfig.EnablePartitionEof && subConfig.DelayInSecondsPartitionEof < 1)
             {

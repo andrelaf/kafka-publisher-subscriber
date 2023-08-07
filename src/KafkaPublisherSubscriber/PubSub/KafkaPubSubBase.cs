@@ -85,6 +85,37 @@ namespace KafkaPublisherSubscriber.PubSub
 
         public async Task TryConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey ,TValue>, Task> onMessageReceived, CancellationToken cancellationToken = default!)
         {
+            var topics = GetSubscriptionTopics();
+            Subscribe(topics);
+
+ 
+            var tasks = new List<Task>();
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var consumeResult = await ConsumeAsync(cancellationToken);
+
+                    if (consumeResult.IsPartitionEOF)
+                    {
+                        await HandleEndOfPartitionAync(tasks, consumeResult, cancellationToken);
+                        continue;
+                    }
+
+                    await ProcessOrQueueMessageAsync(consumeResult, onMessageReceived, tasks, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+
+            }
+
+            HandleConsumerCancellation();
+        }
+
+        private string[] GetSubscriptionTopics()
+        {
             var topics = new List<string>
             {
                 _kafkaFactory.SubConfig.Topic!
@@ -95,54 +126,65 @@ namespace KafkaPublisherSubscriber.PubSub
                 topics.Add(_kafkaFactory.SubConfig.TopicRetry);
             }
 
-            Subscribe(topics.ToArray());
+            return topics.ToArray();
+        }
+        private async Task HandleEndOfPartitionAync(List<Task> tasks, ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancellationToken)
+        {
+            if (tasks.Any())
+            {
+                await ExecuteTasksAsync(tasks, cancellationToken);
+            }
 
+            Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
+            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
+        }
+        private static async Task ExecuteTasksAsync(List<Task> tasks, CancellationToken cancellationToken)
+        {
+            await Task.WhenAny(Task.WhenAll(tasks), Task.Delay(Timeout.Infinite, cancellationToken));
+        }
+        private async Task ProcessOrQueueMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, List<Task> tasks, CancellationToken cancellationToken)
+        {
             try
             {
-                while (!cancellationToken.IsCancellationRequested)
+                if (_kafkaFactory.SubConfig.ConsumerLimit == 0)
                 {
-                    var consumeResult = await ConsumeAsync(cancellationToken);
+                    await TryProcessMessageAsync(consumeResult, onMessageReceived, cancellationToken);
+                }
+                else
+                {
+                    tasks.Add(TryProcessMessageAsync(consumeResult, onMessageReceived, cancellationToken));
 
-                    try
+                    if (tasks.Count >= _kafkaFactory.SubConfig.ConsumerLimit)
                     {
-                        if (consumeResult.IsPartitionEOF)
-                        {
-                            Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
-                            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
-                            continue;
-                        }
-
-
-                        await onMessageReceived.Invoke(consumeResult);
-                        if (!_kafkaFactory.SubConfig.EnableAutoCommit)
-                        {
-                            cancellationToken.ThrowIfCancellationRequested();
-
-                            await CommitAsync(consumeResult, cancellationToken); // Commit the offset since the message was successfully processed
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        Console.WriteLine("Consumer Cancelled!");
-                        break; // Break the loop when the token is canceled
-                    }
-                    catch (Exception ex)
-                    {
-                        int retryCount = consumeResult.Message.Headers.GetHeaderAs<int>(Constants.HEADER_NAME_RETRY_COUNT);
-                        await HandleError(consumeResult: consumeResult, exception: ex, retryCount: retryCount, cancellationToken: cancellationToken);
+                        await ExecuteTasksAsync(tasks, cancellationToken);
+                        tasks.Clear();
                     }
                 }
+
+                if (!_kafkaFactory.SubConfig.EnableAutoCommit)
+                {
+                    await CommitAsync(consumeResult, cancellationToken);
+                }
             }
-            catch (OperationCanceledException)
+            catch (Exception ex)
             {
-                Console.WriteLine("Consumer Cancelled!");
-            }
-            finally
-            {
-                Dispose();
+                var retryCount = consumeResult.Message.Headers.GetHeaderAs<int>(Constants.HEADER_NAME_RETRY_COUNT);
+                await HandleErrorAsync(consumeResult, ex, retryCount, cancellationToken);
             }
         }
-        private async Task HandleError(ConsumeResult<TKey, TValue> consumeResult,
+        private async Task TryProcessMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await onMessageReceived(consumeResult);
+            }
+            catch (Exception ex)
+            {
+                var retryCount = consumeResult.Message.Headers.GetHeaderAs<int>(Constants.HEADER_NAME_RETRY_COUNT);
+                await HandleErrorAsync(consumeResult, ex, retryCount, cancellationToken);
+            }
+        }
+        private async Task HandleErrorAsync(ConsumeResult<TKey, TValue> consumeResult,
                                                           Exception exception,
                                                           int retryCount,
                                                           CancellationToken cancellationToken)
@@ -155,9 +197,9 @@ namespace KafkaPublisherSubscriber.PubSub
             {
                 try
                 {
+                    await PublishToRetryTopicAsync(message: consumeResult.Message.Value, key: consumeResult.Message.Key, retryCount: retryCount + 1, cancellationToken: cancellationToken);
                     // Retry the message by using the consumer and producer interfaces
                     await CommitAsync(consumeResult, cancellationToken); // Commit the offset before retrying
-                    await PublishToRetryTopicAsync(message: consumeResult.Message.Value, key: consumeResult.Message.Key, retryCount: retryCount + 1, cancellationToken: cancellationToken);
                     break; // Exit the retry loop if the retry is successful
                 }
                 catch (Exception retryEx)
@@ -179,6 +221,11 @@ namespace KafkaPublisherSubscriber.PubSub
                 // Commit the offset since the message was processed (either retried or sent to the dead letter queue)
                 await CommitAsync(consumeResult, cancellationToken);
             }
+        }
+        private void HandleConsumerCancellation()
+        {
+            Console.WriteLine("Consumer Cancelled!");
+            Dispose();
         }
         private async Task PublishToRetryTopicAsync(TValue message, TKey key, int retryCount = 0, CancellationToken cancellationToken = default!)
         {
