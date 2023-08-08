@@ -121,9 +121,9 @@ namespace KafkaPublisherSubscriber.PubSub
                 _kafkaFactory.SubConfig.Topic!
             };
 
-            if (!string.IsNullOrEmpty(_kafkaFactory.SubConfig.TopicRetry))
+            if (_kafkaFactory.SubConfig.EnableRetryTopicSubscription)
             {
-                topics.Add(_kafkaFactory.SubConfig.TopicRetry);
+                topics.Add(_kafkaFactory.SubConfig.TopicRetry!);
             }
 
             return topics.ToArray();
@@ -197,7 +197,7 @@ namespace KafkaPublisherSubscriber.PubSub
             {
                 try
                 {
-                    await PublishToRetryTopicAsync(message: consumeResult.Message.Value, key: consumeResult.Message.Key, retryCount: retryCount + 1, cancellationToken: cancellationToken);
+                    await PublishToRetryTopicAsync(consumeResult: consumeResult, retryCount: retryCount + 1, cancellationToken: cancellationToken);
                     // Retry the message by using the consumer and producer interfaces
                     await CommitAsync(consumeResult, cancellationToken); // Commit the offset before retrying
                     break; // Exit the retry loop if the retry is successful
@@ -227,14 +227,12 @@ namespace KafkaPublisherSubscriber.PubSub
             Console.WriteLine("Consumer Cancelled!");
             Dispose();
         }
-        private async Task PublishToRetryTopicAsync(TValue message, TKey key, int retryCount = 0, CancellationToken cancellationToken = default!)
+        private async Task PublishToRetryTopicAsync(ConsumeResult<TKey, TValue> consumeResult, int retryCount, CancellationToken cancellationToken)
         {
-            var headers = new Headers
-            {
-                { "RetryCount", Encoding.UTF8.GetBytes(retryCount.ToString()) }
-            };
+            Headers existingHeaders = consumeResult.Message.Headers;
+            existingHeaders.AddOrUpdate(Constants.HEADER_NAME_RETRY_COUNT, Encoding.UTF8.GetBytes(retryCount.ToString()));
 
-            Message<TKey, TValue> kafkaMessage = _kafkaFactory.CreateKafkaMessage(message, key, headers);
+            Message<TKey, TValue> kafkaMessage = _kafkaFactory.CreateKafkaMessage(message: consumeResult.Message.Value, key: consumeResult.Message.Key, headers: existingHeaders);
 
             _ = await SendAsync(topic: _kafkaFactory.SubConfig.TopicRetry!, kafkaMessage: kafkaMessage, cancellationToken: cancellationToken);
         }

@@ -12,6 +12,7 @@ namespace KafkaPublisherSubscriber.Configs
         public int? StatisticsIntervalMs { get; private set; } = 10000;
         public int? SessionTimeoutMs { get; private set; } = 10000;
         public bool EnablePartitionEof { get; private set; } = false;
+        public bool EnableRetryTopicSubscription { get; private set; } = false;
         public bool? ApiVersionRequest { get; private set; }
         public string? Topic { get; private set; }
         public string? TopicRetry { get; private set; }
@@ -44,6 +45,10 @@ namespace KafkaPublisherSubscriber.Configs
         public void SetEnablePartitionEof(bool enablePartitionEof)
         {
             EnablePartitionEof = enablePartitionEof;
+        }      
+        public void SetEnableRetryTopicSubscription(bool enableRetryTopicSubscription)
+        {
+            EnableRetryTopicSubscription = enableRetryTopicSubscription;
         }
         public void SetApiVersionRequest(bool apiVersionRequest)
         {
@@ -61,22 +66,18 @@ namespace KafkaPublisherSubscriber.Configs
         {
             TopicDeadLetter = topicDeadLetter;
         }
-
         public void SetAutoOffsetReset(AutoOffsetReset autoOffsetReset)
         {
             AutoOffsetReset = autoOffsetReset;
         }
-
         public void SetMaxRetryAttempts(int maxRetryAttempts)
         {
             MaxRetryAttempts = maxRetryAttempts;
         }
-
         public void SetDelayInSecondsPartitionEof(int delayInSecondsPartitionEof)
         {
             DelayInSecondsPartitionEof = delayInSecondsPartitionEof;
         }  
-        
         public void SetConsumerLimit(int consumerLimit)
         {
             ConsumerLimit = consumerLimit;

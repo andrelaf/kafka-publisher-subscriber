@@ -25,6 +25,15 @@ public class JsonDeserializerUtf8<T> : IDeserializer<T>
             return default!;
 
         var jsonString = encoder.GetString(data.ToArray());
-        return JsonSerializer.Deserialize<T>(jsonString, jsonOptions)!;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(jsonString, jsonOptions)!;
+        }
+        catch(JsonException ex)
+        {
+            Console.WriteLine($"Error deserialializing message: {ex.Message}.");
+            return default!;
+        }
     }
 }

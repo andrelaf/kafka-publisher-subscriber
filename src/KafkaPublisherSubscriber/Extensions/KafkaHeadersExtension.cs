@@ -1,5 +1,4 @@
 ﻿using Confluent.Kafka;
-using System;
 using System.Text;
 
 namespace KafkaPublisherSubscriber.Extensions
@@ -23,6 +22,16 @@ namespace KafkaPublisherSubscriber.Extensions
             }
 
             return default;
+        }
+
+        public static void AddOrUpdate(this Headers headers, string headerKey, byte[] headerValue)
+        {
+            if(headers.TryGetLastBytes(headerKey, out _))
+            {
+                headers.Remove(headerKey);
+            }
+
+            headers.Add(headerKey, headerValue);
         }
     }
 }
