@@ -4,8 +4,8 @@
     {
         public string? BootstrapServers { get; private set; }
         public string? Topic { get; private set; }
-        public string Username { get; private set; } = "";
-        public string Password { get; private set; } = "";
+        public string Username { get; private set; } = string.Empty;
+        public string Password { get; private set; } = string.Empty;
         public bool IsCredentialsProvided { get; private set; } = false;
         public void SetBootstrapServers(string bootstrapServers)
         {

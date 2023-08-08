@@ -38,7 +38,7 @@ public static class KafkaValidatorConfig
 
         if (pubConfig.IsCredentialsProvided)
         {
-            if(pubConfig.Username is null || pubConfig.Password is null)
+            if(string.IsNullOrEmpty(pubConfig.Username) || string.IsNullOrEmpty(pubConfig.Password))
             {
                 throw new ArgumentException($"{nameof(pubConfig.Username)} and {nameof(pubConfig.Password)} are required.");
             }
