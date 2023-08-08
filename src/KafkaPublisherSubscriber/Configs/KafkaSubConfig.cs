@@ -4,17 +4,15 @@ using System.Diagnostics.CodeAnalysis;
 namespace KafkaPublisherSubscriber.Configs
 {
     [ExcludeFromCodeCoverage]
-    public sealed class KafkaSubConfig
+    public sealed class KafkaSubConfig : KafkaConfig
     {
         public string? GroupId { get; private set; }
-        public string? BootstrapServers { get; private set; }
         public bool EnableAutoCommit { get; private set; } = false;
         public int? StatisticsIntervalMs { get; private set; } = 10000;
         public int? SessionTimeoutMs { get; private set; } = 10000;
         public bool EnablePartitionEof { get; private set; } = false;
         public bool EnableRetryTopicSubscription { get; private set; } = false;
         public bool? ApiVersionRequest { get; private set; }
-        public string? Topic { get; private set; }
         public string? TopicRetry { get; private set; }
         public string? TopicDeadLetter { get; private set; }
         public AutoOffsetReset AutoOffsetReset { get; private set; } = AutoOffsetReset.Latest;
@@ -25,10 +23,6 @@ namespace KafkaPublisherSubscriber.Configs
         public void SetGroupId(string groupId)
         {
             GroupId = groupId;
-        }
-        public void SetBootstrapServers(string bootstrapServers)
-        {
-            BootstrapServers = bootstrapServers;
         }
         public void SetEnableAutoCommit(bool enableAutoCommit)
         {
@@ -53,10 +47,6 @@ namespace KafkaPublisherSubscriber.Configs
         public void SetApiVersionRequest(bool apiVersionRequest)
         {
             ApiVersionRequest = apiVersionRequest;
-        }
-        public void SetTopic(string topic)
-        {
-            Topic = topic;
         }
         public void SetTopicRetry(string topicRetry)
         {

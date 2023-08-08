@@ -1,9 +1,10 @@
 ﻿using Confluent.Kafka;
 using System.Text.Json;
 using System.Text;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KafkaPublisherSubscriber.Serializers;
-
+[ExcludeFromCodeCoverage]
 public class JsonDeserializerUtf8<T> : IDeserializer<T>
 {
     private readonly JsonSerializerOptions jsonOptions;

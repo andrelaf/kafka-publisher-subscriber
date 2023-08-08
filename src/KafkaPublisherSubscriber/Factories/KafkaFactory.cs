@@ -42,7 +42,9 @@ namespace KafkaPublisherSubscriber.Factories
                 SessionTimeoutMs = _subConfig.SessionTimeoutMs,
                 EnablePartitionEof = _subConfig.EnablePartitionEof,
                 ApiVersionRequest = _subConfig.ApiVersionRequest,
-                AutoOffsetReset = _subConfig.AutoOffsetReset
+                AutoOffsetReset = _subConfig.AutoOffsetReset,
+                SaslUsername = _subConfig.Username,
+                SaslPassword = _subConfig.Password
             };
 
             return new ConsumerBuilder<TKey, TValue>(consumerConfig)
@@ -64,6 +66,8 @@ namespace KafkaPublisherSubscriber.Factories
                 MaxInFlight = _pubConfig.MaxInFlight,
                 MessageSendMaxRetries = _pubConfig.MessageSendMaxRetries,
                 ApiVersionRequest = _pubConfig.ApiVersionRequest,
+                SaslUsername = _subConfig.Username,
+                SaslPassword = _subConfig.Password
             };
 
             return new ProducerBuilder<TKey, TValue>(producerConfig)
