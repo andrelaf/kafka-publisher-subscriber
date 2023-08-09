@@ -1,6 +1,6 @@
 ﻿using KafkaPublisherSubscriber.Configs;
 using KafkaPublisherSubscriber.Extensions;
-using KafkaPublisherSubscriber.Factories;
+using KafkaPublisherSubscriber.PubSub;
 using KafkaPublisherSubscriber.Tests.Mocks;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,14 +28,14 @@ namespace KafkaPublisherSubscriber.Tests
             };
 
             // Act
-            var serviceCollection = _services.AddKafkaPubSub<IPubSubImplementationMock, PubSubImplementationMock>(_subConfigAction!, _pubConfigAction);
+            var serviceCollection = _services.AddKafkaPubSub<string, MessageMock>(_subConfigAction!, _pubConfigAction);
 
             // Assert
             // Assert
             Assert.NotNull(serviceCollection);
             Assert.IsAssignableFrom<IServiceCollection>(serviceCollection);
             Assert.Equal(1, serviceCollection.Count);
-            Assert.Contains(serviceCollection, service => service.ServiceType == typeof(IPubSubImplementationMock));
+            Assert.Contains(serviceCollection, service => service.ServiceType == typeof(IKafkaPubSub<string, MessageMock>));
         }
 
 
@@ -52,20 +52,20 @@ namespace KafkaPublisherSubscriber.Tests
             };
 
             // Act
-            var serviceCollection = _services.AddKafkaPubSub<IPubSubImplementationMock, PubSubImplementationMock>(_subConfigAction, _pubConfigAction!);
+            var serviceCollection = _services.AddKafkaPubSub<string, MessageMock>(_subConfigAction, _pubConfigAction!);
 
             // Assert
             Assert.NotNull(serviceCollection);
             Assert.IsAssignableFrom<IServiceCollection>(serviceCollection);
             Assert.Equal(1, serviceCollection.Count);
-            Assert.Contains(serviceCollection, service => service.ServiceType == typeof(IPubSubImplementationMock));
+            Assert.Contains(serviceCollection, service => service.ServiceType == typeof(IKafkaPubSub<string, MessageMock>));
         }
 
         [Fact]
         public void AddKafkaConsumer_BothConfigNull_ThrowsException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => _services.AddKafkaPubSub<IPubSubImplementationMock, PubSubImplementationMock>());
+            Assert.Throws<ArgumentException>(() => _services.AddKafkaPubSub<string, MessageMock>());
         }
     }
 }

@@ -1,22 +1,24 @@
 ﻿using KafkaPublisherSubscriber.Configs;
+using KafkaPublisherSubscriber.Factories;
 using KafkaPublisherSubscriber.PubSub;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace KafkaPublisherSubscriber.Extensions
 {
     public static class ServicesCollectionExtension
     {
-        public static IServiceCollection AddKafkaTypedPubSub<TKey, TValue>(this IServiceCollection services,
-                                                         Action<KafkaSubConfig> subConfigAction = default!,
-                                                                        Action<KafkaPubConfig> pubConfigAction = default!)
+        public static IServiceCollection AddKafkaPubSub<TKey, TValue>(this IServiceCollection services,
+                                                                           Action<KafkaSubConfig> subConfigAction = default!,
+                                                                           Action<KafkaPubConfig> pubConfigAction = default!)
         {
-            return services.AddKafkaPubSub<IKafkaPubSub<TKey, TValue>, KafkaPubSub<TKey, TValue>>(subConfigAction, pubConfigAction);
+            return services.AddKafka<IKafkaPubSub<TKey, TValue>, KafkaPubSub<TKey, TValue>>(subConfigAction, pubConfigAction);
         }
 
-        public static IServiceCollection AddKafkaPubSub<TService, TImplementation>(this IServiceCollection services,
+        private static IServiceCollection AddKafka<TService, TImplementation>(this IServiceCollection services,
                                                                              Action<KafkaSubConfig> subConfigAction = default!,
-                                                                             Action<KafkaPubConfig> pubConfigAction = default!)
-       where TService : class
+                                                                            Action<KafkaPubConfig> pubConfigAction = default!)
+       where TService : class, IKafkaPubSub
        where TImplementation : class, TService
         {
             if (subConfigAction is null && pubConfigAction is null)
@@ -41,7 +43,12 @@ namespace KafkaPublisherSubscriber.Extensions
                 KafkaValidatorConfig.ValidatePubConfig(pubConfig);
             }
 
-            services.AddSingleton<TService, TImplementation>(s => (TImplementation)Activator.CreateInstance(typeof(TImplementation), subConfig, pubConfig)!);
+            services.AddSingleton<TService, TImplementation>(s =>
+            {
+
+                var logger = s.GetRequiredService<ILogger<IKafkaPubSub>>();
+                return (TImplementation)Activator.CreateInstance(typeof(TImplementation), new KafkaFactory(logger, subConfig!, pubConfig!))!;
+            });
             return services;
 
 

@@ -2,16 +2,20 @@
 using System.Text.Json;
 using System.Text;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
+using KafkaPublisherSubscriber.PubSub;
 
 namespace KafkaPublisherSubscriber.Serializers;
 [ExcludeFromCodeCoverage]
 public class JsonDeserializerUtf8<T> : IDeserializer<T>
 {
+    private readonly ILogger<IKafkaPubSub> _logger;
     private readonly JsonSerializerOptions jsonOptions;
     private readonly Encoding encoder;
 
-    public JsonDeserializerUtf8()
+    public JsonDeserializerUtf8(ILogger<IKafkaPubSub> logger)
     {
+        _logger = logger;
         jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
@@ -33,7 +37,8 @@ public class JsonDeserializerUtf8<T> : IDeserializer<T>
         }
         catch(JsonException ex)
         {
-            Console.WriteLine($"Error deserialializing message: {ex.Message}.");
+            _logger.LogError(ex, "Error deserialializing message: {jsonString}.",jsonString);
+            Console.WriteLine();
             return default!;
         }
     }

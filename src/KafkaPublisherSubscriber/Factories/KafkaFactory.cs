@@ -1,6 +1,8 @@
 ﻿using Confluent.Kafka;
 using KafkaPublisherSubscriber.Configs;
+using KafkaPublisherSubscriber.PubSub;
 using KafkaPublisherSubscriber.Serializers;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
 
 namespace KafkaPublisherSubscriber.Factories
@@ -18,12 +20,14 @@ namespace KafkaPublisherSubscriber.Factories
     [ExcludeFromCodeCoverage]
     public class KafkaFactory : IKafkaFactory
     {
+        private readonly ILogger<IKafkaPubSub> _logger;
         private readonly KafkaSubConfig? _subConfig;
         private readonly KafkaPubConfig? _pubConfig;
-        public KafkaFactory(KafkaSubConfig? subConfig = default!, KafkaPubConfig? pubConfig = default!)
+        public KafkaFactory(ILogger<IKafkaPubSub> logger, KafkaSubConfig subConfig = default!, KafkaPubConfig? pubConfig = default!)
         {
             _subConfig = subConfig;
             _pubConfig = pubConfig;
+            _logger = logger;
         }
 
         public KafkaSubConfig SubConfig => _subConfig!;
@@ -47,9 +51,18 @@ namespace KafkaPublisherSubscriber.Factories
                 SaslPassword = _subConfig.Password
             };
 
+
+            if (_subConfig.IsCredentialsProvided)
+            {
+                consumerConfig.SaslMechanism = SaslMechanism.ScramSha512;
+                consumerConfig.SecurityProtocol = SecurityProtocol.SaslSsl;
+                consumerConfig.SaslUsername = _subConfig.Username;
+                consumerConfig.SaslPassword = _subConfig.Password;
+            }
+
             return new ConsumerBuilder<TKey, TValue>(consumerConfig)
-                .SetKeyDeserializer(new JsonDeserializerUtf8<TKey>())
-                .SetValueDeserializer(new JsonDeserializerUtf8<TValue>())
+                .SetKeyDeserializer(new JsonDeserializerUtf8<TKey>(_logger))
+                .SetValueDeserializer(new JsonDeserializerUtf8<TValue>(_logger))
                 .Build();
         }
 
@@ -66,9 +79,16 @@ namespace KafkaPublisherSubscriber.Factories
                 MaxInFlight = _pubConfig.MaxInFlight,
                 MessageSendMaxRetries = _pubConfig.MessageSendMaxRetries,
                 ApiVersionRequest = _pubConfig.ApiVersionRequest,
-                SaslUsername = _subConfig.Username,
-                SaslPassword = _subConfig.Password
+               
             };
+
+            if (_pubConfig.IsCredentialsProvided)
+            {
+                producerConfig.SaslMechanism = SaslMechanism.ScramSha512;
+                producerConfig.SecurityProtocol = SecurityProtocol.SaslSsl;
+                producerConfig.SaslUsername = _pubConfig.Username;
+                producerConfig.SaslPassword = _pubConfig.Password;
+            }
 
             return new ProducerBuilder<TKey, TValue>(producerConfig)
                 .SetKeySerializer(new JsonSerializerUtf8<TKey>())
