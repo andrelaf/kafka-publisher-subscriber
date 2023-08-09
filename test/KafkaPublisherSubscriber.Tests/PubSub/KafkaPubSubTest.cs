@@ -198,7 +198,6 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
                 config.SetTopic("TestTopic");
                 config.SetTopicRetry("TestTopicRetry");
                 config.SetMaxRetryAttempts(3);
-                config.SetEnableAutoCommit(false);
             }))(subConfig);
 
             _kafkaFactoryMock.Setup(x => x.SubConfig).Returns(subConfig);
@@ -233,6 +232,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
                 Message = message
             };
 
+
             var messageProcessingException = new Exception("Test exception");
 
             int commitCounter = 0;
@@ -262,7 +262,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
                 config.SetTopic("TestTopic");
                 config.SetTopicRetry("TestTopicRetry");
                 config.SetMaxRetryAttempts(3);
-                config.SetEnableAutoCommit(false);
+                config.SetAutoCommitEnabled();
             }))(subConfig);
 
             _kafkaFactoryMock.Setup(x => x.SubConfig).Returns(subConfig);

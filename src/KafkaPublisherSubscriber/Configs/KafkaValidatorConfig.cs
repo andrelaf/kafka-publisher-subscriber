@@ -11,7 +11,7 @@ public static class KafkaValidatorConfig
         ArgumentNullException.ThrowIfNull(pubConfig?.BootstrapServers);
         ArgumentNullException.ThrowIfNull(pubConfig?.Topic);
 
-        if(pubConfig.MessageSendMaxRetries < Constants.MIN_MESSAGE_SEND_RETRIES || pubConfig.MessageSendMaxRetries > Constants.MAX_MESSAGE_SEND_RETRIES)
+        if (pubConfig.MessageSendMaxRetries < Constants.MIN_MESSAGE_SEND_RETRIES || pubConfig.MessageSendMaxRetries > Constants.MAX_MESSAGE_SEND_RETRIES)
         {
             throw new ArgumentException($"The minimum value allowed for the {nameof(pubConfig.MessageSendMaxRetries)} property is {Constants.MIN_MESSAGE_SEND_RETRIES} and the maximum is {Constants.MAX_MESSAGE_SEND_RETRIES}. Current vaue: {pubConfig.MessageSendMaxRetries}.");
         }
@@ -36,16 +36,11 @@ public static class KafkaValidatorConfig
             }
         }
 
-        if (pubConfig.IsCredentialsProvided)
-        {
-            if(string.IsNullOrEmpty(pubConfig.Username) || string.IsNullOrEmpty(pubConfig.Password))
-            {
-                throw new ArgumentException($"{nameof(pubConfig.Username)} and {nameof(pubConfig.Password)} are required.");
-            }
-        }
+        ValidateCredentials(pubConfig.IsCredentialsProvided, pubConfig.Username, pubConfig.Password);
 
     }
 
+   
     public static void ValidateSubConfig(KafkaSubConfig subConfig)
     {
         ArgumentNullException.ThrowIfNull(subConfig?.BootstrapServers);
@@ -53,7 +48,7 @@ public static class KafkaValidatorConfig
         ArgumentNullException.ThrowIfNull(subConfig?.GroupId);
         ArgumentNullException.ThrowIfNull(subConfig?.ConsumerLimit);
 
-        if (subConfig.EnablePartitionEof && subConfig.DelayInSecondsPartitionEof < 1)
+        if (subConfig.EnablePartitionEof && subConfig.DelayInSecondsPartitionEof < Constants.MIN_DELAY_IN_SECONDS_ENABLE_PARTITION_EOF)
         {
             throw new ArgumentException($"When {nameof(subConfig.EnablePartitionEof)} is enabled, the {nameof(subConfig.DelayInSecondsPartitionEof)} property value must be greater than or equal to {Constants.MIN_DELAY_IN_SECONDS_ENABLE_PARTITION_EOF}. Current vaue: {subConfig.DelayInSecondsPartitionEof}.");
         }
@@ -62,5 +57,16 @@ public static class KafkaValidatorConfig
         {
             throw new ArgumentException($"When {nameof(subConfig.EnablePartitionEof)} is enabled, the value of {nameof(subConfig.TopicRetry)} property is required. Current vaue: {subConfig.TopicRetry}.");
         }
+
+        ValidateCredentials(subConfig.IsCredentialsProvided, subConfig.Username, subConfig.Password);
     }
+
+    private static void ValidateCredentials(bool isCredentialsProvide, string username, string password)
+    {
+        if (isCredentialsProvide && (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password)))
+        {
+            throw new ArgumentException($"Username and Password are required.");
+        }
+    }
+
 }

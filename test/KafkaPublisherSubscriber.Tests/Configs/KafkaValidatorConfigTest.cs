@@ -83,7 +83,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetEnablePartitionEof(true);
+            subConfig.SetPartitionEofEnabled();
             subConfig.SetDelayInSecondsPartitionEof(0);
             subConfig.SetConsumerLimit(5);
 
@@ -91,5 +91,67 @@ namespace KafkaPublisherSubscriber.Tests.Configs
 
             Assert.IsType<ArgumentException>(ex);
         }
+
+
+        [Fact]
+        public void ValidateCredentials_WhenCredentialsAreRequiredButUsernameIsEmpty_ThrowsArgumentException()
+        {
+            // Arrange
+            var subConfig = new KafkaSubConfig();
+            subConfig.SetBootstrapServers("localhost:9092");
+            subConfig.SetTopic("testTopic");
+            subConfig.SetGroupId("testGroup");
+            subConfig.SetPartitionEofEnabled();
+            subConfig.SetDelayInSecondsPartitionEof(5);
+            subConfig.SetConsumerLimit(5);
+            subConfig.SetCredentials(string.Empty, "password123");
+
+            // Act
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
+
+            // Assert
+            Assert.IsType<ArgumentException>(ex);
+        }
+
+        [Fact]
+        public void ValidateCredentials_WhenCredentialsAreRequiredButPasswordIsEmpty_ThrowsArgumentException()
+        {
+            // Arrange
+            var subConfig = new KafkaSubConfig();
+            subConfig.SetBootstrapServers("localhost:9092");
+            subConfig.SetTopic("testTopic");
+            subConfig.SetGroupId("testGroup");
+            subConfig.SetPartitionEofEnabled();
+            subConfig.SetDelayInSecondsPartitionEof(0);
+            subConfig.SetConsumerLimit(5);
+            subConfig.SetCredentials("user123", string.Empty);
+
+            // Act
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
+
+            //Assert
+            Assert.IsType<ArgumentException>(ex);
+        }
+
+        [Fact]
+        public void ValidateCredentials_WhenCredentialsAreValid_DoesNotThrowException()
+        {
+            // Arrange
+            var subConfig = new KafkaSubConfig();
+            subConfig.SetBootstrapServers("localhost:9092");
+            subConfig.SetTopic("testTopic");
+            subConfig.SetGroupId("testGroup");
+            subConfig.SetPartitionEofEnabled();
+            subConfig.SetDelayInSecondsPartitionEof(5);
+            subConfig.SetConsumerLimit(5);
+            subConfig.SetCredentials("user123", "validPassword"); // Provide a valid password
+
+            // Act
+            Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
+
+            // Assert
+            Assert.Null(ex);  // No exception should be thrown for valid credentials
+        }
+
     }
 }

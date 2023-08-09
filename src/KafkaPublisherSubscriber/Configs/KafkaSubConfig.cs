@@ -24,9 +24,9 @@ namespace KafkaPublisherSubscriber.Configs
         {
             GroupId = groupId;
         }
-        public void SetEnableAutoCommit(bool enableAutoCommit)
+        public void SetAutoCommitEnabled()
         {
-            EnableAutoCommit = enableAutoCommit;
+            EnableAutoCommit = true;
         }
         public void SetStatisticsIntervalMs(int statisticsIntervalMs)
         {
@@ -36,13 +36,13 @@ namespace KafkaPublisherSubscriber.Configs
         {
             SessionTimeoutMs = sessionTimeoutMs;
         }
-        public void SetEnablePartitionEof(bool enablePartitionEof)
+        public void SetPartitionEofEnabled()
         {
-            EnablePartitionEof = enablePartitionEof;
+            EnablePartitionEof = true;
         }      
-        public void SetEnableRetryTopicSubscription(bool enableRetryTopicSubscription)
+        public void SetRetryTopicSubscriptionEnabled()
         {
-            EnableRetryTopicSubscription = enableRetryTopicSubscription;
+            EnableRetryTopicSubscription = true;
         }
         public void SetApiVersionRequest(bool apiVersionRequest)
         {
