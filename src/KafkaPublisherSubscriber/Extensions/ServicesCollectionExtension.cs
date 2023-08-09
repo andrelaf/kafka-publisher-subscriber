@@ -41,7 +41,7 @@ namespace KafkaPublisherSubscriber.Extensions
                 KafkaValidatorConfig.ValidatePubConfig(pubConfig);
             }
 
-            services.AddScoped<TService, TImplementation>(s => (TImplementation)Activator.CreateInstance(typeof(TImplementation), subConfig, pubConfig)!);
+            services.AddSingleton<TService, TImplementation>(s => (TImplementation)Activator.CreateInstance(typeof(TImplementation), subConfig, pubConfig)!);
             return services;
 
 
