@@ -48,7 +48,6 @@ namespace KafkaPublisherSubscriber.Tests
                 config.SetBootstrapServers("localhost:9092");
                 config.SetTopic("test-topic");
                 config.SetGroupId("group-test");
-                config.SetConsumerLimit(5);
             };
 
             // Act

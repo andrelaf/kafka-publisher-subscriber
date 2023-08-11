@@ -203,7 +203,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             _kafkaFactoryMock.Setup(x => x.SubConfig).Returns(subConfig);
 
             // Act
-            await _kafkaPubSub.TryConsumeWithRetryFlowAsync(_ => Task.CompletedTask, cancellationToken);
+            await _kafkaPubSub.ConsumeWithRetryFlowAsync((_,_) => Task.CompletedTask, cancellationToken);
 
             // Assert
             _consumerMock.Verify(x => x.Subscribe(It.IsAny<string[]>()), Times.Once);
@@ -285,7 +285,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
                          .Callback(() => produceCounter++);
 
             // Act
-            await _kafkaPubSub.TryConsumeWithRetryFlowAsync(message => message.Message.Value == "value" ? Task.FromException(messageProcessingException) : Task.CompletedTask, cancellationToken);
+            await _kafkaPubSub.ConsumeWithRetryFlowAsync((message, token) => message.Message.Value == "value" ? Task.FromException(messageProcessingException) : Task.CompletedTask, cancellationToken);
 
             // Assert
             _consumerMock.Verify(x => x.Subscribe(It.IsAny<string[]>()), Times.Once);

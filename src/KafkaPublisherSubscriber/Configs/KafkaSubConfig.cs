@@ -18,7 +18,6 @@ namespace KafkaPublisherSubscriber.Configs
         public AutoOffsetReset AutoOffsetReset { get; private set; } = AutoOffsetReset.Latest;
         public int MaxRetryAttempts { get; private set; } = 3;
         public int DelayInSecondsPartitionEof { get; private set; } = 1;
-        public int? ConsumerLimit { get; private set; }
         public int ProcessTimeoutInSeconds { get; private set; } = 0;
 
         public void SetGroupId(string groupId)
@@ -69,10 +68,6 @@ namespace KafkaPublisherSubscriber.Configs
         {
             DelayInSecondsPartitionEof = delayInSecondsPartitionEof;
         }  
-        public void SetConsumerLimit(int consumerLimit)
-        {
-            ConsumerLimit = consumerLimit;
-        }
         public void SetProcessTimeoutInSeconds(int processTimeoutInSeconds)
         {
             ProcessTimeoutInSeconds = processTimeoutInSeconds;

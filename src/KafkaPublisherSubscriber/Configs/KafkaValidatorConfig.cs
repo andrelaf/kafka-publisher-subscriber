@@ -46,7 +46,6 @@ public static class KafkaValidatorConfig
         ArgumentNullException.ThrowIfNull(subConfig?.BootstrapServers);
         ArgumentNullException.ThrowIfNull(subConfig?.Topic);
         ArgumentNullException.ThrowIfNull(subConfig?.GroupId);
-        ArgumentNullException.ThrowIfNull(subConfig?.ConsumerLimit);
 
         if (subConfig.EnablePartitionEof && subConfig.DelayInSecondsPartitionEof < Constants.MIN_DELAY_IN_SECONDS_ENABLE_PARTITION_EOF)
         {

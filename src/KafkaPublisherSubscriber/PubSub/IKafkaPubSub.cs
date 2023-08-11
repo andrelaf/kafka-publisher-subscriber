@@ -11,6 +11,6 @@ namespace KafkaPublisherSubscriber.PubSub
         Task<ConsumeResult<TKey, TValue>> ConsumeAsync(CancellationToken cancellationToken);
         Task CommitAsync(ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancelationToken);
         void Subscribe(string[] topics);
-        Task TryConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, CancellationToken cancellationToken = default!);
+        Task ConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey, TValue>, CancellationToken, Task> onMessageReceived, CancellationToken cancellationToken = default!);
     }
 }

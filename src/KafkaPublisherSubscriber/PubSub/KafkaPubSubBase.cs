@@ -5,6 +5,7 @@ using KafkaPublisherSubscriber.Results;
 using System.Collections.Concurrent;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace KafkaPublisherSubscriber.PubSub
 {
@@ -85,32 +86,22 @@ namespace KafkaPublisherSubscriber.PubSub
             _consumer ??= _kafkaFactory.CreateConsumer<TKey, TValue>();
         }
 
-        public async Task TryConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey ,TValue>, Task> onMessageReceived, CancellationToken cancellationToken = default!)
+        public async Task ConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey ,TValue>,CancellationToken, Task> onMessageReceived, CancellationToken cancellationToken = default!)
         {
             var topics = GetSubscriptionTopics();
             Subscribe(topics);
 
  
-            var tasks = new ConcurrentBag<Task>();
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var consumeResult = await ConsumeAsync(cancellationToken);
-
-                    if (consumeResult.IsPartitionEOF)
-                    {
-                        await HandleEndOfPartitionAync(tasks, consumeResult, cancellationToken);
-                        continue;
-                    }
-
-                    await ProcessOrQueueMessageAsync(consumeResult, onMessageReceived, tasks, cancellationToken);
+                    await TryConsumeWithRetryFlowAsync(onMessageReceived: onMessageReceived, cancellationToken: cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {
                     break;
                 }
-
             }
 
             HandleConsumerCancellation();
@@ -129,67 +120,87 @@ namespace KafkaPublisherSubscriber.PubSub
 
             return topics.ToArray();
         }
-        private async Task HandleEndOfPartitionAync(ConcurrentBag<Task> tasks, ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancellationToken)
+        private async Task TryConsumeWithRetryFlowAsync(Func<ConsumeResult<TKey, TValue>, CancellationToken, Task> onMessageReceived, CancellationToken cancellationToken = default!)
         {
-            if (tasks.Any())
+            var consumeResult = await ConsumeAsync(cancellationToken);
+            if (consumeResult.IsPartitionEOF)
             {
-                await ProcessTasksWithTimeoutAndClearAsync(tasks, cancellationToken);
+                await HandleEndOfPartitionAync(consumeResult: consumeResult, cancellationToken: cancellationToken);
+                return;
             }
 
-            Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
-            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
-        }
-        private async Task ProcessOrQueueMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, ConcurrentBag<Task> tasks, CancellationToken cancellationToken)
-        {
             try
             {
-                if (_kafkaFactory.SubConfig.ConsumerLimit == 0)
-                {
-                    _ = Task.Run(async () => await TryProcessMessageAsync(consumeResult: consumeResult,
-                                                              onMessageReceived: onMessageReceived,
-                                                              cancellationToken: cancellationToken), cancellationToken: cancellationToken);
-                }
-                else
-                {
-                    tasks.Add(TryProcessMessageAsync(consumeResult: consumeResult, onMessageReceived: onMessageReceived, cancellationToken: cancellationToken));
-
-                    if (tasks.Count >= _kafkaFactory.SubConfig.ConsumerLimit)
-                    {
-                        var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.ProcessTimeoutInSeconds);
-                        await ProcessTasksWithTimeoutAndClearAsync(tasks, cancellationToken);
-                    }
-                }
-
                 if (!_kafkaFactory.SubConfig.EnableAutoCommit)
                 {
                     await CommitAsync(consumeResult, cancellationToken);
                 }
+
+                await TryProcessMessageWithinTimeoutAsync(consumeResult: consumeResult,
+                                                         onMessageReceived: onMessageReceived,
+                                                         externalCancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
-                var retryCount = consumeResult.Message.Headers.GetHeaderAs<int>(Constants.HEADER_NAME_RETRY_COUNT);
-                await HandleErrorAsync(consumeResult, ex, retryCount, cancellationToken);
+                await HandleErrorAsync(consumeResult: consumeResult,
+                                       exception: ex,
+                                       cancellationToken: cancellationToken);
             }
         }
-        private async Task TryProcessMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, CancellationToken cancellationToken)
+        private async Task HandleEndOfPartitionAync(ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancellationToken)
         {
-            try
+            Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
+            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
+        }
+        private async Task TryProcessMessageWithinTimeoutAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, CancellationToken, Task> onMessageReceived, CancellationToken externalCancellationToken)
+        {
+            var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.ProcessTimeoutInSeconds);
+            if (timeout.TotalSeconds <= 0)
             {
-                await onMessageReceived(consumeResult);
+                await onMessageReceived(consumeResult, externalCancellationToken);
+                return;
             }
-            catch (Exception ex)
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
+            cts.CancelAfter(timeout);
+
+
+            bool isCompletedBeforeTimeout = await ExecuteTaskWithTimeoutAsync(taskToComplete: onMessageReceived(consumeResult, cts.Token),
+                                                                              timeout: timeout,
+                                                                              cancellationToken: externalCancellationToken);
+            if (!isCompletedBeforeTimeout)
             {
-                var retryCount = consumeResult.Message.Headers.GetHeaderAs<int>(Constants.HEADER_NAME_RETRY_COUNT);
-                await HandleErrorAsync(consumeResult, ex, retryCount, cancellationToken);
+                Console.WriteLine($"Processing message took too long and was timed out after {timeout.TotalSeconds} seconds");
+                throw new TimeoutException("Message processing time out.");
             }
+        }
+
+
+        private static async Task<bool> ExecuteTaskWithTimeoutAsync(Task taskToComplete, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+
+            var taskWait = Task.Delay(timeout, cancellationToken);
+
+            var completedTask = await Task.WhenAny(taskToComplete, taskWait);
+
+            if(completedTask == taskWait)
+            {
+                return false;
+            }
+
+            await taskToComplete;
+            return true;
+
         }
         private async Task HandleErrorAsync(ConsumeResult<TKey, TValue> consumeResult,
                                                           Exception exception,
-                                                          int retryCount,
                                                           CancellationToken cancellationToken)
         {
+
+            var retryCount = consumeResult.Message.Headers.GetHeaderAs<int>(Constants.HEADER_NAME_RETRY_COUNT);
+            
             // Log the error or perform any other error handling logic
-            Console.WriteLine($"Error processing message: {consumeResult.Message.Value}. Exception: {exception}");
+            Console.WriteLine($"Error processing message: {consumeResult.Message.Value} retryCount: {retryCount}. Exception: {exception}");
 
             // Retry the message if the retry count is less than the maximum allowed
             while (retryCount < _kafkaFactory.SubConfig.MaxRetryAttempts)
@@ -220,49 +231,6 @@ namespace KafkaPublisherSubscriber.PubSub
                 // Commit the offset since the message was processed (either retried or sent to the dead letter queue)
                 await CommitAsync(consumeResult, cancellationToken);
             }
-        }
-        public async Task ProcessTasksWithTimeoutAndClearAsync(ConcurrentBag<Task> tasks, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.ProcessTimeoutInSeconds);
-
-                await ExecuteTasksWithTimeoutsAsync(tasks, timeout, cancellationToken);
-            }
-            finally
-            {
-                ClearTasks(tasks);
-            }
-        }
-        private static async Task ExecuteTasksWithTimeoutsAsync(ConcurrentBag<Task> tasks, TimeSpan timeout, CancellationToken cancellationToken = default)
-        {
-            var tasksWithTimeouts = tasks.Select(t => WithTimeoutAsync(t, timeout, cancellationToken)).ToList();
-            await Task.WhenAll(tasksWithTimeouts);
-        }
-        private static async Task WithTimeoutAsync(Task task, TimeSpan timeout, CancellationToken externalCancellationToken = default)
-        {
-            if(timeout.TotalSeconds == 0)
-            {
-               await task;
-               return;
-            }
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
-            cts.CancelAfter(timeout);
-
-            try
-            {
-                await task;
-            }
-            catch (TaskCanceledException) when (!externalCancellationToken.IsCancellationRequested)
-            {
-                Console.WriteLine($"Some tasks did not complete within {timeout.TotalSeconds} seconds and were timed out.");
-                throw new TimeoutException();
-            }
-        }
-        private static void ClearTasks(ConcurrentBag<Task> tasks)
-        {
-            tasks.Clear();
         }
         private void HandleConsumerCancellation()
         {
