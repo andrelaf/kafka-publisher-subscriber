@@ -2,6 +2,7 @@
 using KafkaPublisherSubscriber.Extensions;
 using KafkaPublisherSubscriber.Factories;
 using KafkaPublisherSubscriber.Results;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Threading;
 
@@ -90,7 +91,7 @@ namespace KafkaPublisherSubscriber.PubSub
             Subscribe(topics);
 
  
-            var tasks = new List<Task>();
+            var tasks = new ConcurrentBag<Task>();
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -128,7 +129,7 @@ namespace KafkaPublisherSubscriber.PubSub
 
             return topics.ToArray();
         }
-        private async Task HandleEndOfPartitionAync(List<Task> tasks, ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancellationToken)
+        private async Task HandleEndOfPartitionAync(ConcurrentBag<Task> tasks, ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancellationToken)
         {
             if (tasks.Any())
             {
@@ -138,7 +139,7 @@ namespace KafkaPublisherSubscriber.PubSub
             Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
             await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
         }
-        private async Task ProcessOrQueueMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, List<Task> tasks, CancellationToken cancellationToken)
+        private async Task ProcessOrQueueMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, ConcurrentBag<Task> tasks, CancellationToken cancellationToken)
         {
             try
             {
@@ -154,7 +155,7 @@ namespace KafkaPublisherSubscriber.PubSub
 
                     if (tasks.Count >= _kafkaFactory.SubConfig.ConsumerLimit)
                     {
-                        var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.TimeoutInSeconds);
+                        var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.ProcessTimeoutInSeconds);
                         await ProcessTasksWithTimeoutAndClearAsync(tasks, cancellationToken);
                     }
                 }
@@ -220,7 +221,7 @@ namespace KafkaPublisherSubscriber.PubSub
                 await CommitAsync(consumeResult, cancellationToken);
             }
         }
-        public async Task ProcessTasksWithTimeoutAndClearAsync(List<Task> tasks, CancellationToken cancellationToken)
+        public async Task ProcessTasksWithTimeoutAndClearAsync(ConcurrentBag<Task> tasks, CancellationToken cancellationToken)
         {
             try
             {
@@ -233,7 +234,7 @@ namespace KafkaPublisherSubscriber.PubSub
                 ClearTasks(tasks);
             }
         }
-        private static async Task ExecuteTasksWithTimeoutsAsync(List<Task> tasks, TimeSpan timeout, CancellationToken cancellationToken = default)
+        private static async Task ExecuteTasksWithTimeoutsAsync(ConcurrentBag<Task> tasks, TimeSpan timeout, CancellationToken cancellationToken = default)
         {
             var tasksWithTimeouts = tasks.Select(t => WithTimeoutAsync(t, timeout, cancellationToken)).ToList();
             await Task.WhenAll(tasksWithTimeouts);
@@ -259,7 +260,7 @@ namespace KafkaPublisherSubscriber.PubSub
                 throw new TimeoutException();
             }
         }
-        private static void ClearTasks(List<Task> tasks)
+        private static void ClearTasks(ConcurrentBag<Task> tasks)
         {
             tasks.Clear();
         }
