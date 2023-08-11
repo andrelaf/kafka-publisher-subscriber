@@ -224,7 +224,7 @@ namespace KafkaPublisherSubscriber.PubSub
         {
             try
             {
-                var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.TimeoutInSeconds);
+                var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.ProcessTimeoutInSeconds);
 
                 await ExecuteTasksWithTimeoutsAsync(tasks, timeout, cancellationToken);
             }
@@ -240,6 +240,12 @@ namespace KafkaPublisherSubscriber.PubSub
         }
         private static async Task WithTimeoutAsync(Task task, TimeSpan timeout, CancellationToken externalCancellationToken = default)
         {
+            if(timeout.TotalSeconds == 0)
+            {
+               await task;
+               return;
+            }
+
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
             cts.CancelAfter(timeout);
 
