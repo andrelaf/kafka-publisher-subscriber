@@ -3,6 +3,7 @@ using KafkaPublisherSubscriber.Extensions;
 using KafkaPublisherSubscriber.Factories;
 using KafkaPublisherSubscriber.Results;
 using System.Text;
+using System.Threading;
 
 namespace KafkaPublisherSubscriber.PubSub
 {
@@ -113,7 +114,6 @@ namespace KafkaPublisherSubscriber.PubSub
 
             HandleConsumerCancellation();
         }
-
         private string[] GetSubscriptionTopics()
         {
             var topics = new List<string>
@@ -132,15 +132,11 @@ namespace KafkaPublisherSubscriber.PubSub
         {
             if (tasks.Any())
             {
-                await ExecuteTasksAsync(tasks, cancellationToken);
+                await ProcessTasksWithTimeoutAndClearAsync(tasks, cancellationToken);
             }
 
             Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
             await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
-        }
-        private static async Task ExecuteTasksAsync(List<Task> tasks, CancellationToken cancellationToken)
-        {
-            await Task.WhenAny(Task.WhenAll(tasks), Task.Delay(Timeout.Infinite, cancellationToken));
         }
         private async Task ProcessOrQueueMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, Task> onMessageReceived, List<Task> tasks, CancellationToken cancellationToken)
         {
@@ -148,16 +144,18 @@ namespace KafkaPublisherSubscriber.PubSub
             {
                 if (_kafkaFactory.SubConfig.ConsumerLimit == 0)
                 {
-                    await TryProcessMessageAsync(consumeResult, onMessageReceived, cancellationToken);
+                    _ = Task.Run(async () => await TryProcessMessageAsync(consumeResult: consumeResult,
+                                                              onMessageReceived: onMessageReceived,
+                                                              cancellationToken: cancellationToken), cancellationToken: cancellationToken);
                 }
                 else
                 {
-                    tasks.Add(TryProcessMessageAsync(consumeResult, onMessageReceived, cancellationToken));
+                    tasks.Add(TryProcessMessageAsync(consumeResult: consumeResult, onMessageReceived: onMessageReceived, cancellationToken: cancellationToken));
 
                     if (tasks.Count >= _kafkaFactory.SubConfig.ConsumerLimit)
                     {
-                        await ExecuteTasksAsync(tasks, cancellationToken);
-                        tasks.Clear();
+                        var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.TimeoutInSeconds);
+                        await ProcessTasksWithTimeoutAndClearAsync(tasks, cancellationToken);
                     }
                 }
 
@@ -221,6 +219,43 @@ namespace KafkaPublisherSubscriber.PubSub
                 // Commit the offset since the message was processed (either retried or sent to the dead letter queue)
                 await CommitAsync(consumeResult, cancellationToken);
             }
+        }
+        public async Task ProcessTasksWithTimeoutAndClearAsync(List<Task> tasks, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.TimeoutInSeconds);
+
+                await ExecuteTasksWithTimeoutsAsync(tasks, timeout, cancellationToken);
+            }
+            finally
+            {
+                ClearTasks(tasks);
+            }
+        }
+        private static async Task ExecuteTasksWithTimeoutsAsync(List<Task> tasks, TimeSpan timeout, CancellationToken cancellationToken = default)
+        {
+            var tasksWithTimeouts = tasks.Select(t => WithTimeoutAsync(t, timeout, cancellationToken)).ToList();
+            await Task.WhenAll(tasksWithTimeouts);
+        }
+        private static async Task WithTimeoutAsync(Task task, TimeSpan timeout, CancellationToken externalCancellationToken = default)
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
+            cts.CancelAfter(timeout);
+
+            try
+            {
+                await task;
+            }
+            catch (TaskCanceledException) when (!externalCancellationToken.IsCancellationRequested)
+            {
+                Console.WriteLine($"Some tasks did not complete within {timeout.TotalSeconds} seconds and were timed out.");
+                throw new TimeoutException();
+            }
+        }
+        private static void ClearTasks(List<Task> tasks)
+        {
+            tasks.Clear();
         }
         private void HandleConsumerCancellation()
         {

@@ -19,6 +19,7 @@ namespace KafkaPublisherSubscriber.Configs
         public int MaxRetryAttempts { get; private set; } = 3;
         public int DelayInSecondsPartitionEof { get; private set; } = 1;
         public int? ConsumerLimit { get; private set; }
+        public int TimeoutInSeconds { get; private set; } = 0;
 
         public void SetGroupId(string groupId)
         {
@@ -71,6 +72,10 @@ namespace KafkaPublisherSubscriber.Configs
         public void SetConsumerLimit(int consumerLimit)
         {
             ConsumerLimit = consumerLimit;
+        }
+        public void SetTimeoutInSeconds(int timeoutInSeconds)
+        {
+            TimeoutInSeconds = timeoutInSeconds;
         }
     }
 }
