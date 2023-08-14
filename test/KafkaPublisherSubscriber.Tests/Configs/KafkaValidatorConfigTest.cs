@@ -84,7 +84,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
             subConfig.SetPartitionEofEnabled();
-            subConfig.SetDelayInSecondsPartitionEof(0);
+            subConfig.SetDelayIPartitionEofMs(0);
 
 
             Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
@@ -102,7 +102,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
             subConfig.SetPartitionEofEnabled();
-            subConfig.SetDelayInSecondsPartitionEof(5);
+            subConfig.SetDelayIPartitionEofMs(5);
             subConfig.SetCredentials(string.Empty, "password123");
 
             // Act
@@ -121,7 +121,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
             subConfig.SetPartitionEofEnabled();
-            subConfig.SetDelayInSecondsPartitionEof(0);
+            subConfig.SetDelayIPartitionEofMs(0);
             subConfig.SetCredentials("user123", string.Empty);
 
             // Act
@@ -140,7 +140,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
             subConfig.SetPartitionEofEnabled();
-            subConfig.SetDelayInSecondsPartitionEof(5);
+            subConfig.SetDelayIPartitionEofMs(5);
             subConfig.SetCredentials("user123", "validPassword"); // Provide a valid password
 
             // Act

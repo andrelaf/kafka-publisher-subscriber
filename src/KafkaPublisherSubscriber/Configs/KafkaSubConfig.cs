@@ -16,9 +16,10 @@ namespace KafkaPublisherSubscriber.Configs
         public string? TopicRetry { get; private set; }
         public string? TopicDeadLetter { get; private set; }
         public AutoOffsetReset AutoOffsetReset { get; private set; } = AutoOffsetReset.Latest;
-        public int MaxRetryAttempts { get; private set; } = 3;
-        public int DelayInSecondsPartitionEof { get; private set; } = 1;
-        public int ProcessTimeoutInSeconds { get; private set; } = 0;
+        public int RetryLimit { get; private set; } = 3;
+        public int DelayIPartitionEofMs { get; private set; } = 1;
+        public int? MaxConcurrentMessages { get; private set; } = 1;
+        public int MessageProcessingTimeoutMs { get; private set; } = 1;
 
         public void SetGroupId(string groupId)
         {
@@ -60,17 +61,22 @@ namespace KafkaPublisherSubscriber.Configs
         {
             AutoOffsetReset = autoOffsetReset;
         }
-        public void SetMaxRetryAttempts(int maxRetryAttempts)
+        /// <summary>
+        /// Define o limite de tentativas de processamento de uma mensagem. Se a mensagem falhar ao ser processada 
+        /// após exceder esse limite, ela não será mais retentada.
+        /// </summary>
+        /// <param name="retryLimit">O número máximo de tentativas de processamento da mensagem.</param>
+        public void SetRetryLimit(int retryLimit)
         {
-            MaxRetryAttempts = maxRetryAttempts;
+            RetryLimit = retryLimit;
         }
-        public void SetDelayInSecondsPartitionEof(int delayInSecondsPartitionEof)
+        public void SetDelayIPartitionEofMs(int delayIPartitionEofMs)
         {
-            DelayInSecondsPartitionEof = delayInSecondsPartitionEof;
+            DelayIPartitionEofMs = delayIPartitionEofMs;
         }  
-        public void SetProcessTimeoutInSeconds(int processTimeoutInSeconds)
+        public void SetMessageProcessingTimeoutMs(int messageProcessingTimeoutMs)
         {
-            ProcessTimeoutInSeconds = processTimeoutInSeconds;
+            MessageProcessingTimeoutMs = messageProcessingTimeoutMs;
         }
     }
 }

@@ -197,7 +197,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             {
                 config.SetTopic("TestTopic");
                 config.SetTopicRetry("TestTopicRetry");
-                config.SetMaxRetryAttempts(3);
+                config.SetRetryLimit(3);
             }))(subConfig);
 
             _kafkaFactoryMock.Setup(x => x.SubConfig).Returns(subConfig);
@@ -261,7 +261,7 @@ namespace KafkaPublisherSubscriber.Tests.PubSub
             {
                 config.SetTopic("TestTopic");
                 config.SetTopicRetry("TestTopicRetry");
-                config.SetMaxRetryAttempts(3);
+                config.SetRetryLimit(3);
                 config.SetAutoCommitEnabled();
             }))(subConfig);
 

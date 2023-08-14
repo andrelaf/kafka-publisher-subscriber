@@ -3,7 +3,6 @@ using KafkaPublisherSubscriber.Factories;
 using KafkaPublisherSubscriber.PubSub;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 
 namespace KafkaPublisherSubscriber.Extensions
 {
@@ -48,7 +47,7 @@ namespace KafkaPublisherSubscriber.Extensions
             var username = (pubConfig?.Username?? subConfig?.Username);
             var password = (pubConfig?.Password ?? subConfig?.Username);
 
-            services.AddKafkaHealthCheck(boorstrapServers, username, password);
+            services.AddKafkaHealthCheck(boorstrapServers!, username!, password!);
 
             services.AddSingleton<TService, TImplementation>(s =>
             {

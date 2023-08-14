@@ -150,11 +150,11 @@ namespace KafkaPublisherSubscriber.PubSub
         private async Task HandleEndOfPartitionAync(ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancellationToken)
         {
             Console.WriteLine($"Consumer has reached end of topic {consumeResult.Topic}, partition {consumeResult.Partition}, offset {consumeResult.Offset}");
-            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayInSecondsPartitionEof), cancellationToken); // Insira um atraso conforme necessário
+            await Task.Delay(TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayIPartitionEofMs), cancellationToken); // Insira um atraso conforme necessário
         }
         private async Task TryProcessMessageWithinTimeoutAsync(ConsumeResult<TKey, TValue> consumeResult, Func<ConsumeResult<TKey, TValue>, CancellationToken, Task> onMessageReceived, CancellationToken externalCancellationToken)
         {
-            var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.ProcessTimeoutInSeconds);
+            var timeout = TimeSpan.FromSeconds(_kafkaFactory.SubConfig.MessageProcessingTimeoutMs);
             if (timeout.TotalSeconds <= 0)
             {
                 await onMessageReceived(consumeResult, externalCancellationToken);
@@ -203,7 +203,7 @@ namespace KafkaPublisherSubscriber.PubSub
             Console.WriteLine($"Error processing message: {consumeResult.Message.Value} retryCount: {retryCount}. Exception: {exception}");
 
             // Retry the message if the retry count is less than the maximum allowed
-            while (retryCount < _kafkaFactory.SubConfig.MaxRetryAttempts)
+            while (retryCount < _kafkaFactory.SubConfig.RetryLimit)
             {
                 try
                 {
@@ -220,7 +220,7 @@ namespace KafkaPublisherSubscriber.PubSub
                 }
             }
 
-            if (retryCount >= _kafkaFactory.SubConfig.MaxRetryAttempts)
+            if (retryCount >= _kafkaFactory.SubConfig.RetryLimit)
             {
                 // The message has reached the maximum retry attempts, publish it to the dead letter queue
                 await PublishToDeadLetterTopicAsync(kafkaMessage: consumeResult.Message, cancellationToken: cancellationToken);
