@@ -1,11 +1,9 @@
-﻿using Confluent.Kafka;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
-namespace KafkaPublisherSubscriber.Configs
+namespace KafkaPublisherSubscriber.Configs;
+
+[ExcludeFromCodeCoverage]
+public sealed class KafkaAdminConfig : KafkaConfig
 {
-    [ExcludeFromCodeCoverage]
-    public sealed class KafkaAdminConfig : KafkaConfig
-    {
-      
-    }
+  
 }

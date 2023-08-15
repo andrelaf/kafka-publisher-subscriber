@@ -83,7 +83,6 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetPartitionEofEnabled();
             subConfig.SetDelayIPartitionEofMs(0);
 
 
@@ -101,7 +100,6 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetPartitionEofEnabled();
             subConfig.SetDelayIPartitionEofMs(5);
             subConfig.SetCredentials(string.Empty, "password123");
 
@@ -120,7 +118,6 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetPartitionEofEnabled();
             subConfig.SetDelayIPartitionEofMs(0);
             subConfig.SetCredentials("user123", string.Empty);
 
@@ -139,7 +136,6 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetPartitionEofEnabled();
             subConfig.SetDelayIPartitionEofMs(5);
             subConfig.SetCredentials("user123", "validPassword"); // Provide a valid password
 
