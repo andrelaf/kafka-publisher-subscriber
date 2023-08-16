@@ -17,7 +17,7 @@ public sealed class KafkaSubConfig : KafkaConfig
     public string? TopicDeadLetter { get; private set; }
     public AutoOffsetReset AutoOffsetReset { get; private set; } = AutoOffsetReset.Latest;
     public int RetryLimit { get; private set; } = 3;
-    public int DelayIPartitionEofMs { get; private set; } = 1000;
+    public int DelayPartitionEofMs { get; private set; } = 1000;
     public int MaxConcurrentMessages { get; private set; } = 0;
     public double MessageProcessingTimeoutMs { get; private set; } = 1000;
 
@@ -66,9 +66,15 @@ public sealed class KafkaSubConfig : KafkaConfig
     {
         RetryLimit = retryLimit;
     }
-    public void SetDelayIPartitionEofMs(int delayIPartitionEofMs)
+
+
+    public void SetMaxConcurrentMessages(int maxConcurrentMessages)
     {
-        DelayIPartitionEofMs = delayIPartitionEofMs;
+        MaxConcurrentMessages = maxConcurrentMessages;
+    }
+    public void SetDelayPartitionEofMs(int delayPartitionEofMs)
+    {
+        DelayPartitionEofMs = delayPartitionEofMs;
     }  
     public void SetMessageProcessingTimeoutMs(int messageProcessingTimeoutMs)
     {

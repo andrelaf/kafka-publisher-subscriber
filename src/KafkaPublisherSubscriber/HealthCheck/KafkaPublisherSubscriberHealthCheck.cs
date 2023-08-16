@@ -4,10 +4,10 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace KafkaPublisherSubscriber.HealthCheck
 {
-    public class KafkaHealthCheck : IHealthCheck
+    public class KafkaPublisherSubscriberHealthCheck : IHealthCheck
     {
         private readonly Action<KafkaAdminConfig> _adminConfigAction;
-        public KafkaHealthCheck(Action<KafkaAdminConfig> adminConfigAction)
+        public KafkaPublisherSubscriberHealthCheck(Action<KafkaAdminConfig> adminConfigAction)
         {
             ArgumentNullException.ThrowIfNull(adminConfigAction, nameof(adminConfigAction));
 

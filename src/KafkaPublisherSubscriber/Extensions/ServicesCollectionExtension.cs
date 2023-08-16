@@ -1,72 +1,25 @@
-﻿using KafkaPublisherSubscriber.Configs;
-using KafkaPublisherSubscriber.Factories;
-using KafkaPublisherSubscriber.PubSub;
+﻿using KafkaPublisherSubscriber.HealthCheck;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace KafkaPublisherSubscriber.Extensions;
 
 public static class ServicesCollectionExtension
 {
-    public static IServiceCollection AddKafkaPubSub<TKey, TValue>(this IServiceCollection services,
-                                                                       Action<KafkaSubConfig> subConfigAction = default!,
-                                                                       Action<KafkaPubConfig> pubConfigAction = default!)
+  
+    public static KafkaPublisherSubscriber AddKafkaBroker(this IServiceCollection services, string brokerName, string boststrapServer, string username = default!, string password = default!)
     {
-        return services.AddKafka<IKafkaPubSub<TKey, TValue>, KafkaPubSub<TKey, TValue>>(subConfigAction, pubConfigAction);
+        ArgumentNullException.ThrowIfNull(brokerName);
+
+        services.AddHealthChecks()
+            .AddCheck($"Kafka - {brokerName}", new KafkaPublisherSubscriberHealthCheck(config => {
+                config.SetBootstrapServers(boststrapServer);
+                if(username is not null && password is not null)
+                {
+                    config.SetCredentials(username, password);
+                }
+            }));
+
+        return new KafkaPublisherSubscriber(services, boststrapServer, username, password);
     }
-
-    private static IServiceCollection AddKafka<TService, TImplementation>(this IServiceCollection services,
-                                                                         Action<KafkaSubConfig> subConfigAction = default!,
-                                                                        Action<KafkaPubConfig> pubConfigAction = default!)
-   where TService : class, IKafkaPubSub
-   where TImplementation : class, TService
-    {
-        if (subConfigAction is null && pubConfigAction is null)
-        {
-            throw new ArgumentException($"{nameof(subConfigAction)} and/or {nameof(pubConfigAction)} are required.");
-        }
-
-
-        KafkaSubConfig? subConfig = null;
-        if (subConfigAction is not null)
-        {
-            subConfig = new KafkaSubConfig();
-            subConfigAction.Invoke(subConfig);
-            KafkaValidatorConfig.ValidateSubConfig(subConfig);
-        }
-
-        KafkaPubConfig? pubConfig = null;
-        if (pubConfigAction != null)
-        {
-            pubConfig = new KafkaPubConfig();
-            pubConfigAction.Invoke(pubConfig);
-            KafkaValidatorConfig.ValidatePubConfig(pubConfig);
-        }
-
-        var boorstrapServers = (pubConfig?.BootstrapServers ?? subConfig?.BootstrapServers);
-        var username = (pubConfig?.Username?? subConfig?.Username);
-        var password = (pubConfig?.Password ?? subConfig?.Username);
-
-        services.AddKafkaHealthCheck(boorstrapServers!, username!, password!);
-
-        services.AddSingleton<TService, TImplementation>(s =>
-        {
-
-            var logger = s.GetRequiredService<ILogger<IKafkaPubSub>>();
-            return (TImplementation)Activator.CreateInstance(typeof(TImplementation), new KafkaFactory(logger, subConfig!, pubConfig!))!;
-        });
-        return services;
-
-
-    }
-
-    private static IServiceCollection AddKafkaHealthCheck(this IServiceCollection services, string boorstrapServers, string username, string password)
-    {
-
-        // Register HealthCheck
-        return services;
-    }
-
-
 
 }

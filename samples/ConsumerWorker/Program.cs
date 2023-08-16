@@ -1,33 +1,47 @@
+using Confluent.Kafka;
 using ConsumerWorker;
+using ConsumerWorker.Messages;
 using KafkaPublisherSubscriber.Extensions;
+using KafkaPublisherSubscriber.Settings;
 
-internal class Program
-{
-    private static void Main(string[] args)
-    {
+IHost host = Host.CreateDefaultBuilder(args)
+   .ConfigureServices((hostContext, services) =>
+   {
+       IConfiguration configuration = hostContext.Configuration;
 
-        IHost host = Host.CreateDefaultBuilder(args)
-            .ConfigureServices(services =>
-            {
-                services.AddKafkaProducerAndConsumer<string, string>(consumerConfigAction =>
-                {
-                    consumerConfigAction.WithBootstrapServers("localhost:9092");
-                    consumerConfigAction.WithTopic("my-topic");
-                    consumerConfigAction.WithGroupId("group-test");
-                    consumerConfigAction.WithEnableAutoCommit(false);
-                    // Add any other consumer settings as needed
-                },
-            producerConfigAction =>
-            {
-                producerConfigAction.WithBootstrapServers("localhost:9092");
-                producerConfigAction.WithTopic("my-topic");
-                // Add any other producer settings as needed
-            });
+       var kafkaBrokerSetgings = configuration.GetSection(nameof(KafkaBrokerSettings)).Get<Dictionary<string, KafkaBrokerSettings>>();
 
-                services.AddHostedService<Worker>();
-            })
-            .Build();
+       ArgumentNullException.ThrowIfNull(kafkaBrokerSetgings);
 
-        host.Run();
-    }
-}
+       foreach (var brokerSettings in kafkaBrokerSetgings)
+       {
+           var kafkaPublisherSubscriber = services.AddKafkaBroker(brokerSettings.Key,
+                                                                  brokerSettings.Value.BootstrapServers,
+                                                                  brokerSettings.Value.Username!,
+                                                                  brokerSettings.Value.Password!);
+
+           foreach (var topicSettings in brokerSettings.Value.Topics)
+           {
+               kafkaPublisherSubscriber.AddKafkaPubSub<string, OrderMessage>(
+                   subConfigAction: config =>
+                   {
+                       config.SetTopic(topicSettings.Key);
+                       config.SetTopicRetry(topicSettings.Value.TopicRetry!);
+                       config.SetTopicDeadLetter(topicSettings.Value.TopicDeadLetter!);
+                       config.SetGroupId(topicSettings.Value.GroupId!);
+                       config.SetRetryLimit(topicSettings.Value.RetryLimit!);
+                       config.SetMaxConcurrentMessages(topicSettings.Value.RetryLimit!);
+                       config.SetDelayPartitionEofMs(topicSettings.Value.RetryLimit!);
+                       config.SetAutoOffsetReset(AutoOffsetReset.Earliest);
+                       config.SetRetryTopicSubscriptionEnabled();
+                       config.SetMessageProcessingTimeoutMs(topicSettings.Value.MessageProcessingTimeoutMilliseconds);
+                   });
+           }
+
+       }
+
+       services.AddHostedService<Worker>();
+    })
+    .Build();
+
+await host.RunAsync();

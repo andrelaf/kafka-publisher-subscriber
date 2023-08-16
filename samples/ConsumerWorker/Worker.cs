@@ -1,25 +1,47 @@
-using KafkaPublisherSubscriber.Handlers;
+using ConsumerWorker.Messages;
+using KafkaPublisherSubscriber.Extensions;
+using KafkaPublisherSubscriber.PubSub;
+using KafkaPublisherSubscriber.Results;
 
-namespace ConsumerWorker
+namespace ConsumerWorker;
+
+public class Worker : BackgroundService
 {
-    public class Worker : BackgroundService
+    private readonly ILogger<Worker> _logger;
+    private readonly IKafkaPubSub<string, OrderMessage> _kafkaPubSub;
+    public Worker(ILogger<Worker> logger, IKafkaPubSub<string, OrderMessage> kafkaPubSub)
     {
-        private readonly ILogger<Worker> _logger;
-        private readonly IKafkaMessageHandler<string, string> _kafkaMessageHandler;
+        _logger = logger;
+        _kafkaPubSub = kafkaPubSub;
+    }
 
-        public Worker(ILogger<Worker> logger, IKafkaMessageHandler<string, string> kafkaMessageHandler)
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+
+        stoppingToken.Register(() => {
+            _logger.LogInformation("Worker is stopping.");
+        });
+
+ 
+        await _kafkaPubSub.ConsumeWithRetriesAsync(onMessageReceived: ProcessMessageAsync, cancellationToken: stoppingToken);
+        
+    }
+
+    private async Task ProcessMessageAsync(RetryableConsumeResult<string, OrderMessage> result, CancellationToken stoppingToken)
+    {
+        try
         {
-            _logger = logger;
-            _kafkaMessageHandler = kafkaMessageHandler;
+            _logger.LogInformation(message: "Order received description: {Description} value: {Value}", result.Message.Value.Description, result.Message.Value.Value);
+
+            await Task.Delay(1000, stoppingToken);
+
         }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        catch (Exception ex)
         {
-            await _kafkaMessageHandler.Subscribe((message) =>
-            {
-                _logger.LogInformation("Received message: {message} - at: {time}.", message, DateTimeOffset.Now);
-                return Task.CompletedTask;
-            }, stoppingToken);
+            _logger.LogError(ex, "Error ocurred while consuming messasges.");
+
+            result.TryAgain();
         }
     }
 }
