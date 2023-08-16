@@ -83,7 +83,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetDelayIPartitionEofMs(0);
+            subConfig.SetDelayPartitionEofMs(0);
 
 
             Exception ex = Record.Exception(() => KafkaValidatorConfig.ValidateSubConfig(subConfig));
@@ -100,7 +100,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetDelayIPartitionEofMs(5);
+            subConfig.SetDelayPartitionEofMs(5);
             subConfig.SetCredentials(string.Empty, "password123");
 
             // Act
@@ -118,7 +118,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetDelayIPartitionEofMs(0);
+            subConfig.SetDelayPartitionEofMs(0);
             subConfig.SetCredentials("user123", string.Empty);
 
             // Act
@@ -136,7 +136,7 @@ namespace KafkaPublisherSubscriber.Tests.Configs
             subConfig.SetBootstrapServers("localhost:9092");
             subConfig.SetTopic("testTopic");
             subConfig.SetGroupId("testGroup");
-            subConfig.SetDelayIPartitionEofMs(5);
+            subConfig.SetDelayPartitionEofMs(5);
             subConfig.SetCredentials("user123", "validPassword"); // Provide a valid password
 
             // Act
