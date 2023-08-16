@@ -2,7 +2,6 @@
 using KafkaPublisherSubscriber.Extensions;
 using KafkaPublisherSubscriber.Factories;
 using KafkaPublisherSubscriber.Results;
-using KafkaPublisherSubscriber.Utilities;
 using System.Text;
 
 namespace KafkaPublisherSubscriber.PubSub;
@@ -58,7 +57,10 @@ public abstract class KafkaPubSubBase<TKey, TValue> : IKafkaPubSub<TKey, TValue>
     {
         EnsurConsumerConnection();
 
-        return await Task.Run(() => _consumer!.Consume(cancellationToken), cancellationToken: cancellationToken);
+        var consumeTask = Task.Run(() => _consumer!.Consume(cancellationToken), cancellationToken);
+        return await consumeTask.RetryAsync(maxRetries: Constants.MAX_CONSUME_RETRIES, 
+                                            delayBetweenRetries: TimeSpan.FromSeconds(Constants.DELAY_IN_SECONDS_BETWEEN_RETRIES),
+                                            cancellationToken: cancellationToken);
     }
     public async Task CommitAsync(ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancelationToken)
     {
@@ -107,6 +109,10 @@ public abstract class KafkaPubSubBase<TKey, TValue> : IKafkaPubSub<TKey, TValue>
             catch (OperationCanceledException)
             {
                 break;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"An error occurred while trying to consume the message error: {ex.Message}.");
             }
         }
 
@@ -214,10 +220,13 @@ public abstract class KafkaPubSubBase<TKey, TValue> : IKafkaPubSub<TKey, TValue>
         }
         else
         {
-            await TimeoutTaskRunner.ExecuteWithTimeoutAsync(
-                cancellationToken => onMessageReceived(retryableConsumeResult, cancellationToken),
+            Func<CancellationToken, Task> taskToRun = ct => onMessageReceived(retryableConsumeResult, ct);
+
+            await taskToRun.ExecuteWithTimeoutAsync(
                 timeout: TimeSpan.FromMilliseconds(_kafkaFactory.SubConfig.MessageProcessingTimeoutMs),
                 externalCancellationToken: cancellationToken);
+
+          
         }
     }
     private async Task HandleRetryAsync(ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancellationToken)
