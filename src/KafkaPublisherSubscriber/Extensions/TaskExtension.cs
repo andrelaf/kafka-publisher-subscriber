@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KafkaPublisherSubscriber.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class TaskExtension
 {
     public static async Task ExecuteWithTimeoutAsync(this Func<CancellationToken, Task> taskFunc, TimeSpan timeout, CancellationToken externalCancellationToken)
@@ -23,7 +25,7 @@ public static class TaskExtension
         await actionTask;
     }
 
-    public static async Task<T> RetryAsync<T>(this Task<T> task, int maxRetries, TimeSpan delayBetweenRetries, CancellationToken cancellationToken)
+    public static async Task<T> RetryAsync<T>(this Func<Task<T>> taskFunc, int maxRetries, TimeSpan delayBetweenRetries, CancellationToken cancellationToken)
     {
         int currentRetry = 0;
 
@@ -31,7 +33,7 @@ public static class TaskExtension
         {
             try
             {
-                return await task;
+                return await taskFunc();
             }
             catch (Exception ex)
             {

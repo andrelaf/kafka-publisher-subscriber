@@ -57,10 +57,15 @@ public abstract class KafkaPubSubBase<TKey, TValue> : IKafkaPubSub<TKey, TValue>
     {
         EnsurConsumerConnection();
 
-        var consumeTask = Task.Run(() => _consumer!.Consume(cancellationToken), cancellationToken);
-        return await consumeTask.RetryAsync(maxRetries: Constants.MAX_CONSUME_RETRIES, 
+        Func<Task<ConsumeResult<TKey, TValue>>> consumeFunc =
+          () => Task.Run(() => _consumer!.Consume(cancellationToken), cancellationToken);
+
+        var consumeResult = await consumeFunc.RetryAsync(maxRetries: Constants.MAX_CONSUME_RETRIES,
                                             delayBetweenRetries: TimeSpan.FromSeconds(Constants.DELAY_IN_SECONDS_BETWEEN_RETRIES),
                                             cancellationToken: cancellationToken);
+
+        Console.WriteLine($"Consume message from topic: {consumeResult.Topic} message: {consumeResult.Message.Serialize()}");
+        return consumeResult;
     }
     public async Task CommitAsync(ConsumeResult<TKey, TValue> consumeResult, CancellationToken cancelationToken)
     {

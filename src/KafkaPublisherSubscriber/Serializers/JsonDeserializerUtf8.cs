@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using KafkaPublisherSubscriber.PubSub;
 
 namespace KafkaPublisherSubscriber.Serializers;
+
 [ExcludeFromCodeCoverage]
 public class JsonDeserializerUtf8<T> : IDeserializer<T>
 {
