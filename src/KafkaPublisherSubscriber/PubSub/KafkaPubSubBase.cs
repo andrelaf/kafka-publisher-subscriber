@@ -161,11 +161,6 @@ public abstract class KafkaPubSubBase<TKey, TValue> : IKafkaPubSub<TKey, TValue>
                 await ExecuteTasksAndClearAsync(tasks);
             }
         }
-
-        await TimeoutTaskRunner.ExecuteWithTimeoutAsync(async (linkedToken) =>
-        {
-            // Seu código, usando linkedToken onde necessário.
-        }, TimeSpan.FromSeconds(5), cancellationToken);
     }
     private static async Task ExecuteTasksAndClearAsync(List<Task> tasks)
     {
@@ -180,7 +175,7 @@ public abstract class KafkaPubSubBase<TKey, TValue> : IKafkaPubSub<TKey, TValue>
             return;
         }
 
-        await Task.Delay(delay: TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayIPartitionEofMs),
+        await Task.Delay(delay: TimeSpan.FromSeconds(_kafkaFactory.SubConfig.DelayPartitionEofMs),
                          cancellationToken: cancellationToken);
     }
     private async Task TryProcessMessageAsync(ConsumeResult<TKey, TValue> consumeResult, Func<RetryableConsumeResult<TKey, TValue>, CancellationToken, Task> onMessageReceived, CancellationToken cancellationToken)

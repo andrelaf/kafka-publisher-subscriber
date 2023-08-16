@@ -29,12 +29,12 @@ IHost host = Host.CreateDefaultBuilder(args)
                        config.SetTopicRetry(topicSettings.Value.TopicRetry!);
                        config.SetTopicDeadLetter(topicSettings.Value.TopicDeadLetter!);
                        config.SetGroupId(topicSettings.Value.GroupId!);
-                       config.SetRetryLimit(topicSettings.Value.RetryLimit!);
-                       config.SetMaxConcurrentMessages(topicSettings.Value.RetryLimit!);
-                       config.SetDelayPartitionEofMs(topicSettings.Value.RetryLimit!);
+                       config.SetRetryLimit(topicSettings.Value.RetryLimit);
+                       config.SetMaxConcurrentMessages(topicSettings.Value.MaxConcurrentMessages);
+                       config.SetDelayPartitionEofMs(topicSettings.Value.DelayPartitionEofMs);
                        config.SetAutoOffsetReset(AutoOffsetReset.Earliest);
-                       config.SetRetryTopicSubscriptionEnabled();
                        config.SetMessageProcessingTimeoutMs(topicSettings.Value.MessageProcessingTimeoutMilliseconds);
+                       config.SetRetryTopicSubscriptionEnabled();
                    });
            }
 

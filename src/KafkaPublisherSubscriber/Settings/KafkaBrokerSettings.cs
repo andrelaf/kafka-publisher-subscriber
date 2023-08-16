@@ -20,7 +20,7 @@ public class KafkaTopicSettings
     public int MaxInFlight { get; set; }
     public string? GroupId { get; set; }
     public int RetryLimit { get; set; }
-    public int DelayInSecondsPartitionEof { get; set; }
+    public int DelayPartitionEofMs { get; set; }
     public int MaxConcurrentMessages { get; set; } 
     public int MessageProcessingTimeoutMilliseconds { get; set; }
 

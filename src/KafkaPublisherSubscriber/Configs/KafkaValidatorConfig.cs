@@ -49,7 +49,7 @@ public static class KafkaValidatorConfig
 
         if (subConfig.EnablePartitionEof && subConfig.DelayPartitionEofMs < Constants.MIN_DELAY_IN_MILLISECONDS_ENABLE_PARTITION_EOF)
         {
-            throw new ArgumentException($"When {nameof(subConfig.EnablePartitionEof)} is enabled, the {nameof(subConfig.DelayPartitionEofMs)} property value must be greater than or equal to {Constants.MIN_DELAY_IN_SECONDS_ENABLE_PARTITION_EOF}. Current vaue: {subConfig.DelayIPartitionEofMs}.");
+            throw new ArgumentException($"When {nameof(subConfig.EnablePartitionEof)} is enabled, the {nameof(subConfig.DelayPartitionEofMs)} property value must be greater than or equal to {Constants.MIN_DELAY_IN_MILLISECONDS_ENABLE_PARTITION_EOF}. Current vaue: {subConfig.DelayPartitionEofMs}.");
         }
 
         if (subConfig.EnableRetryTopicSubscription && subConfig.TopicRetry is null)
